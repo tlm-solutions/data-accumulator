@@ -9,14 +9,16 @@
     utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, naersk, utils, ... }: 
-   utils.lib.eachDefaultSystem (system: let
-     pkgs = nixpkgs.legacyPackages.${system};
-    
-     package = pkgs.callPackage ./derivation.nix { 
-        naersk = naersk.lib.${system};
-     };
-      in rec {
+  outputs = { self, nixpkgs, naersk, utils, ... }:
+    utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+
+        package = pkgs.callPackage ./derivation.nix {
+          naersk = naersk.lib.${system};
+        };
+      in
+      rec {
         checks = packages;
         packages.data-accumulator = package;
         overlay = (final: prev: {

@@ -28,7 +28,7 @@ pub struct RawData {
     lat: f64,
     lon: f64,
     station_id: u32,
-    raw_data: String,
+    raw_data: Vec<u8>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

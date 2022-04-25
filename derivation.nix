@@ -1,9 +1,9 @@
-{ naersk, src, lib, pkg-config}:
+{ naersk, src, lib, pkg-config }:
 
 naersk.buildPackage {
   pname = "data-accumulator";
   version = "0.1.0";
-  
+
   src = ./.;
 
   cargoSha256 = lib.fakeSha256;
