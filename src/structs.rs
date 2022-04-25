@@ -9,6 +9,7 @@ pub struct Telegram {
     line: u32,
     course_number: u32,
     destination_number: u32,
+    pr: u32,
     zv: u32,
     zw: u32,
     mp: u32,
@@ -20,6 +21,7 @@ pub struct Telegram {
     zl: u32,
     junction: u32,
     junction_number: u32,
+    request_status: u32
 }
 
 #[derive(Deserialize, Serialize, Debug)]
