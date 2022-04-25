@@ -18,9 +18,9 @@
      };
       in rec {
         checks = packages;
-        packages.data-collector = package;
+        packages.data-accumulator = package;
         overlay = (final: prev: {
-          data-collector = package;
+          data-accumulator = package;
         });
       }
     );
