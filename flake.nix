@@ -21,6 +21,7 @@
       rec {
         checks = packages;
         packages.data-accumulator = package;
+        defaultPackage = package;
         overlay = (final: prev: {
           data-accumulator = package;
         });
