@@ -1,44 +1,43 @@
 mod structs;
+mod processor;
 
+use structs::{Response};
+use processor::{Processor, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 use serde::{Serialize};
 use std::fs::{File, OpenOptions};
 use actix_web::{web, App, HttpServer, Responder};
-use structs::{Telegram, Response, RawData};
 use std::env;
 use csv::{WriterBuilder};
+use std::sync::{RwLock};
 
-async fn dump_to_file<T: Serialize>(file_path: &str, data: &T ) {
-    println!("FILE: {} {}", file_path, std::path::Path::new(file_path).exists());
+async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<Telegram>) -> impl Responder {
 
-    let file: File;
-    let mut file_existed: bool = true;
-    if std::path::Path::new(file_path).exists() {
-        println!("File Exists ... ");
-        file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .open(&file_path)
-            .unwrap();
-
-        file_existed = false;
-    } else {
-        file = File::create(file_path).unwrap();
+    let telegram_hash = Processor::calculate_hash(&telegram).await;
+    println!("Hash {}", telegram_hash);
+    let contained;
+    {
+        let readable_processor = processor.write().unwrap();
+        contained = readable_processor.last_elements.contains(&telegram_hash);
     }
-    let mut wtr = WriterBuilder::new()
-         .has_headers(file_existed)
-         .from_writer(file);
-    //let mut wtr = csv::Writer::from_writer(file);
-    wtr.serialize(&data);
-    wtr.flush();
-}
+    println!("Contains {}", contained);
+    {
+        let mut writeable_processor = processor.write().unwrap();
+        let index = writeable_processor.iterator;
+        writeable_processor.last_elements[index] = telegram_hash;
+        writeable_processor.iterator = (writeable_processor.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+        println!("{:?}", &writeable_processor.last_elements);
+    }
 
+    // do more processing
+    if !contained {
+        let default_file = String::from("/var/lib/data-accumulator/formatte_data.csv");
+        let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
 
-async fn formatted(telegram: web::Json<Telegram>) -> impl Responder {
-    let default_file = String::from("/var/lib/data-accumulator/formatte_data.csv");
-    let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
-
-    println!("Received Formatted Record: {:?}", &telegram);
-    dump_to_file(&csv_file, &telegram).await;
+        println!("NEW Received Formatted Record: {:?}", &telegram);
+        Processor::dump_to_file(&csv_file, &telegram).await;
+    } else {
+        println!("OLD Received Formatted Record: {:?}", &telegram);
+    }
 
     web::Json(Response { success: true })
 }
@@ -48,7 +47,7 @@ async fn raw(telegram: web::Json<RawData>) -> impl Responder {
     let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
 
     println!("Received Formatted Record: {:?}", &telegram);
-    dump_to_file(&csv_file, &telegram).await;
+    //dump_to_file(&csv_file, &telegram).await;
 
     web::Json(Response { success: true })
 }
@@ -59,8 +58,8 @@ async fn main() -> std::io::Result<()> {
     let host = "127.0.0.1";
     let port = 8080;
     println!("Listening on: {}:{}", host, port);
-
     HttpServer::new(|| App::new()
+                    .app_data(web::Data::new(RwLock::new(Processor::new())))
                     .route("/formatted_telegram", web::post().to(formatted))
                     .route("/raw_telegram", web::post().to(raw))
 
