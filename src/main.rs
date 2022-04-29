@@ -15,18 +15,29 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
     let telegram_hash = Processor::calculate_hash(&telegram).await;
     println!("Hash {}", telegram_hash);
     let contained;
-    {
-        let readable_processor = processor.write().unwrap();
-        contained = readable_processor.last_elements.contains(&telegram_hash);
+    match processor.read() {
+        Ok(readable_processor) => {
+            println!("Start: index: {} field: {:?}", &readable_processor.iterator, &readable_processor.last_elements);
+            contained = readable_processor.last_elements.contains(&telegram_hash);
+        }
+        Err(_) => {
+            println!("ALARM!");
+            contained = false;
+        }
     }
     println!("Contains {}", contained);
-    {
-        let mut writeable_processor = processor.write().unwrap();
-        let index = writeable_processor.iterator;
-        writeable_processor.last_elements[index] = telegram_hash;
-        writeable_processor.iterator = (writeable_processor.iterator + 1) % DEPULICATION_BUFFER_SIZE;
-        println!("{:?}", &writeable_processor.last_elements);
-    }
+    match processor.write() {
+        Ok(mut writeable_processor) => {
+            println!("End: end: {} field: {:?}", &writeable_processor.iterator, &writeable_processor.last_elements);
+            let index = writeable_processor.iterator;
+            writeable_processor.last_elements[index] = telegram_hash;
+            writeable_processor.iterator = (writeable_processor.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+            println!("End: end: {} field: {:?}", &writeable_processor.iterator, &writeable_processor.last_elements);
+        }
+        Err(_) => {
+            println!("ALAARM!!");
+        }
+    };
 
     // do more processing
     if !contained {
