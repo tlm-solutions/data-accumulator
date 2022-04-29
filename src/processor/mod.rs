@@ -30,10 +30,6 @@ impl Processor {
         s.finish()
     }
 
-    pub async fn process(&mut self, telegram: Telegram) {
-        
-    }
-
     pub async fn dump_to_file<T: Serialize>(file_path: &str, data: &T ) {
         let file: File;
         let mut file_existed: bool = true;

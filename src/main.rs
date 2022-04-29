@@ -3,21 +3,20 @@ mod processor;
 
 use structs::{Response};
 use processor::{Processor, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
-use serde::{Serialize};
-use std::fs::{File, OpenOptions};
 use actix_web::{web, App, HttpServer, Responder};
 use std::env;
-use csv::{WriterBuilder};
-use std::sync::{RwLock, Arc};
+use std::sync::{RwLock};
 
 async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<Telegram>) -> impl Responder {
 
     let telegram_hash = Processor::calculate_hash(&telegram).await;
     let contained;
+    // checks if the given telegram is already in the buffer
      {
         let readable_processor = processor.read().unwrap();
         contained = readable_processor.last_elements.contains(&telegram_hash);
     }
+    // updates the buffer adding the new telegram
     {
         let mut writeable_processor = processor.write().unwrap();
         let index = writeable_processor.iterator;
@@ -33,7 +32,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         println!("NEW Received Formatted Record: {:?}", &telegram);
         Processor::dump_to_file(&csv_file, &telegram).await;
     } else {
-        println!("OLD Received Formatted Record: {:?}", &telegram);
+        println!("DROPPED TELEGRAM");
     }
 
     web::Json(Response { success: true })
@@ -44,7 +43,7 @@ async fn raw(telegram: web::Json<RawData>) -> impl Responder {
     let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
 
     println!("Received Formatted Record: {:?}", &telegram);
-    //dump_to_file(&csv_file, &telegram).await;
+    Processor::dump_to_file(&csv_file, &telegram).await;
 
     web::Json(Response { success: true })
 }

@@ -33,7 +33,6 @@ pub struct RawData {
 
 impl Hash for Telegram {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.time_stamp.hash(state);
         self.station_id.hash(state);
         self.line.hash(state);
         self.destination_number.hash(state);
