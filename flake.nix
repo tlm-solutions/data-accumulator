@@ -14,21 +14,43 @@
   };
 
   outputs = { self, nixpkgs, naersk, utils, ... }:
-    utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
+    utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
 
-        package = pkgs.callPackage ./derivation.nix {
-          naersk = naersk.lib.${system};
-        };
-      in
-      rec {
-        checks = packages;
-        packages.data-accumulator = package;
-        defaultPackage = package;
-        overlay = (final: prev: {
-          data-accumulator = package;
-        });
-      }
-    );
+          package = pkgs.callPackage ./derivation.nix {
+            naersk = naersk.lib.${system};
+          };
+        in
+        rec {
+          checks = packages;
+          packages.data-accumulator = package;
+          defaultPackage = package;
+          overlay = (final: prev: {
+            data-accumulator = package;
+          });
+        }
+      ) // {
+      hydraJobs =
+        let
+          hydraSystems = [
+            "x86_64-linux"
+            "aarch64-linux"
+          ];
+        in
+        builtins.foldl'
+          (hydraJobs: system:
+            builtins.foldl'
+              (hydraJobs: pkgName:
+                nixpkgs.lib.recursiveUpdate hydraJobs {
+                  ${pkgName}.${system} = self.packages.${system}.${pkgName};
+                }
+              )
+              hydraJobs
+              (builtins.attrNames self.packages.${system})
+          )
+          { }
+          hydraSystems;
+    };
 }
