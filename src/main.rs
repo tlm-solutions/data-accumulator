@@ -1,11 +1,15 @@
+extern crate clap;
+
 mod structs;
 mod processor;
 
-use structs::{Response};
+use structs::{Response, Args};
 use processor::{Processor, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
+
 use actix_web::{web, App, HttpServer, Responder};
 use std::env;
 use std::sync::{RwLock};
+use clap::Parser;
 
 async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<Telegram>) -> impl Responder {
 
@@ -51,13 +55,14 @@ async fn raw(telegram: web::Json<RawData>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let args = Args::parse();
 
-    //let runtime: web::Data<Arc<RwLock<Processor>>>= web::Data::new(Arc::new(RwLock::new(Processor::new())));    
-    let data = web::Data::new(RwLock::new(Processor::new())); 
     println!("Starting Server ... ");
-    let host = "127.0.0.1";
-    let port = 8080;
+    let host = args.host.as_str();
+    let port = args.port;
+
     println!("Listening on: {}:{}", host, port);
+    let data = web::Data::new(RwLock::new(Processor::new())); 
     HttpServer::new(move || App::new()
                     .app_data(data.clone())
                     .route("/formatted_telegram", web::post().to(formatted))
