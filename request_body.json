@@ -3,7 +3,7 @@
     "lat": 0.0,
     "lon": 0.0,
     "station_id": 0,
-    "line": 0,
+    "line": 1,
     "destination_number": 0,
     "priority": 0,
     "sign_of_deviation": 0,
