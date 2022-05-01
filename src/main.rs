@@ -57,17 +57,23 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         //let junction = parsed.get(&junction_string).map(|u| u.as_str().unwrap()).unwrap_or(&junction_string);
         let mut lat;
         let mut lon;
-        if parsed.contains_key(&telegram.junction.to_string()) {
-            println!("KNOWN Station: {} -> {}", telegram.junction_number, parsed.get(&telegram.junction_number.to_string()).unwrap().name);
-            lat = parsed.get(&telegram.junction.to_string()).unwrap().lat;
-            lon = parsed.get(&telegram.junction.to_string()).unwrap().lon;
-        } else {
-            lat = 0f64;
-            lon = 0f64;
+        println!("X: {} {}", telegram.junction.to_string(), parsed.contains_key(&telegram.junction.to_string()));
+        match parsed.get(&telegram.junction.to_string()) {
+            Some(data) => {
+                println!("KNOWN Station: {} -> {}", telegram.junction, data.name);
+                lat = data.lat;
+                lon = data.lon;
+            }
+            None => {
+                println!("UNKOWN");
+                lat = 0f64;
+                lon = 0f64;
+            }
         }
+
         let request = tonic::Request::new(ReducedTelegram {
             time_stamp: telegram.time_stamp,
-            position_id: telegram.reporting_point,
+            position_id: telegram.junction,
             line: telegram.line,
             delay: ((telegram.sign_of_deviation as i32) * 2 - 1) * telegram.value_of_deviation as i32,
             direction: telegram.run_number,
