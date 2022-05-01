@@ -57,9 +57,10 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         //let junction = parsed.get(&junction_string).map(|u| u.as_str().unwrap()).unwrap_or(&junction_string);
         let mut lat;
         let mut lon;
-        if parsed.contains_key(&telegram.junction_number.to_string()) {
-            lat = parsed.get(&telegram.junction_number.to_string()).unwrap().lat;
-            lon = parsed.get(&telegram.junction_number.to_string()).unwrap().lon;
+        if parsed.contains_key(&telegram.junction.to_string()) {
+            println!("KNOWN Station: {} -> {}", telegram.junction_number, parsed.get(&telegram.junction_number.to_string()).unwrap().name);
+            lat = parsed.get(&telegram.junction.to_string()).unwrap().lat;
+            lon = parsed.get(&telegram.junction.to_string()).unwrap().lon;
         } else {
             lat = 0f64;
             lon = 0f64;
@@ -70,7 +71,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
             line: telegram.line,
             delay: ((telegram.sign_of_deviation as i32) * 2 - 1) * telegram.value_of_deviation as i32,
             direction: telegram.run_number,
-            destination_number: telegram.destination_number,
+            destination_number: telegram.junction_number,
             status: 0,
             lat: lat as f32,
             lon: lon as f32
