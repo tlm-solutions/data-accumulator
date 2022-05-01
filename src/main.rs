@@ -41,7 +41,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let default_file = String::from("/var/lib/data-accumulator/formatte_data.csv");
         let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
 
-        let default_public_api = String::from("127.0.0.1:50051");
+        let default_public_api = String::from("http://127.0.0.1:50051");
         let url_public_api = env::var("PUBLIC_API").unwrap_or(default_public_api);
 
         //let default_public_api = String::from("../stops.json");
@@ -50,7 +50,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let writing_file_response = Processor::dump_to_file(&csv_file, &telegram);
 
         println!("NEW Received Formatted Record: {:?}", &telegram);
-        let mut client = ReceivesTelegramsClient::connect(url_public_api).await.unwrap();
+        let mut client = ReceivesTelegramsClient::connect(&url_public_api).await.unwrap();
 
         const FILE_STR: &'static str = include_str!("../stops.json");
         let parsed: HashMap<String, StopConfig> = serde_json::from_str(&FILE_STR).expect("JSON was not well-formatted");
