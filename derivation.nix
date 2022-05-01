@@ -7,10 +7,10 @@ naersk.buildPackage {
   src = ./.;
 
   cargoSha256 = lib.fakeSha256;
-  patchPhase = ''
-    substituteInPlace bin/lfc \
-      --replace '../stops.json' "${stops}/stops.json" \  
-  '';
+  #patchPhase = ''
+  #  substituteInPlace main.rs \
+  #    --replace '../stops.json' "${stops}/stops.json" \  
+  #'';
   nativeBuildInputs = [ pkg-config cmake protobuf ];
 
   meta = with lib; {
