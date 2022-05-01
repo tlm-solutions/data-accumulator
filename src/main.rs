@@ -7,14 +7,12 @@ use structs::{Response, Args, StopConfig};
 use processor::{Processor, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 
 use dvb_dump::receives_telegrams_client::{ReceivesTelegramsClient};
-use dvb_dump::{ ReturnCode, ReducedTelegram };
+use dvb_dump::{ ReducedTelegram };
 
 pub mod dvb_dump{
     tonic::include_proto!("dvbdump");
 }
 
-
-use serde_json::Map;
 use actix_web::{web, App, HttpServer, Responder};
 use std::env;
 use std::sync::{RwLock};
@@ -43,31 +41,34 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let default_file = String::from("/var/lib/data-accumulator/formatte_data.csv");
         let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
 
-        //let default_public_api = String::from("127.0.0.1:50051");
-        //let url_public_api = env::var("PUBLIC_API").unwrap_or(default_public_api);
-        let default_public_api = String::from("./stops.json");
-        let url_public_api = env::var("STOPS_CONFIG").unwrap_or(default_public_api);
+        let default_public_api = String::from("127.0.0.1:50051");
+        let url_public_api = env::var("PUBLIC_API").unwrap_or(default_public_api);
+
+        //let default_public_api = String::from("../stops.json");
+        //let url_public_api = env::var("STOPS_CONFIG").unwrap_or(default_public_api);
+
+        let writing_file_response = Processor::dump_to_file(&csv_file, &telegram);
 
         println!("NEW Received Formatted Record: {:?}", &telegram);
-        let mut client = ReceivesTelegramsClient::connect("http://127.0.0.1:50051").await.unwrap();
+        let mut client = ReceivesTelegramsClient::connect(url_public_api).await.unwrap();
 
         const FILE_STR: &'static str = include_str!("../stops.json");
         let parsed: HashMap<String, StopConfig> = serde_json::from_str(&FILE_STR).expect("JSON was not well-formatted");
-        //let junction_string = self.junction.to_string();
-        //let junction = parsed.get(&junction_string).map(|u| u.as_str().unwrap()).unwrap_or(&junction_string);
-        let mut lat;
-        let mut lon;
-        println!("X: {} {}", telegram.junction.to_string(), parsed.contains_key(&telegram.junction.to_string()));
+
+        let lat;
+        let lon;
+        let station_name;
+
         match parsed.get(&telegram.junction.to_string()) {
             Some(data) => {
-                println!("KNOWN Station: {} -> {}", telegram.junction, data.name);
                 lat = data.lat;
                 lon = data.lon;
+                station_name = data.name.clone();
             }
             None => {
-                println!("UNKOWN");
                 lat = 0f64;
                 lon = 0f64;
+                station_name = String::from("");
             }
         }
 
@@ -80,15 +81,14 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
             destination_number: telegram.junction_number,
             status: 0,
             lat: lat as f32,
-            lon: lon as f32
+            lon: lon as f32,
+            station_name: station_name
         });
 
-        let response = client.receive_new(request).await;
+        let response = client.receive_new(request);
 
-        //file_write.await;
-        //response.await;
-    } else {
-        println!("DROPPED TELEGRAM");
+        writing_file_response.await;
+        response.await;
     }
 
     web::Json(Response { success: true })

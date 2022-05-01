@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash};
 use std::hash::Hasher;
-use std::convert::From;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Telegram {

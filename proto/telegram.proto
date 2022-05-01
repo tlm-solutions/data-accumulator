@@ -16,6 +16,7 @@ message ReducedTelegram {
     uint32 destination_number = 7;
     float lat = 8;
     float lon = 9;
+    string station_name = 10;
 }
 
 message ReturnCode {
