@@ -1,4 +1,4 @@
-{ naersk, src, lib, pkg-config, cmake, protobuf }:
+{ naersk, src, lib, pkg-config, cmake, protobuf, stops }:
 
 naersk.buildPackage {
   pname = "data-accumulator";
@@ -7,9 +7,11 @@ naersk.buildPackage {
   src = ./.;
 
   cargoSha256 = lib.fakeSha256;
-
+  patchPhase = ''
+    substituteInPlace bin/lfc \
+      --replace '../stops.json' "${stops}/stops.json" \  
+  '';
   nativeBuildInputs = [ pkg-config cmake protobuf ];
-  #buildInputs = [ openssl libpqxx libiconv postgresql git ];
 
   meta = with lib; {
     description = "Simple rust server which collects data from telegram stations";

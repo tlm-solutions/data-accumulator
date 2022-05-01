@@ -40,7 +40,24 @@
       "inputs": {
         "naersk": "naersk",
         "nixpkgs": "nixpkgs",
+        "stops": "stops",
         "utils": "utils"
+      }
+    },
+    "stops": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1651422271,
+        "narHash": "sha256-Z4vOWBPVA6QFYjoJ0VgUmIpRMuoFpA+hDL5gfe7kq/8=",
+        "owner": "dump-dvb",
+        "repo": "stop-names",
+        "rev": "dee2d0cdcf4e86f143dd4c20ae5a4a26382746f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dump-dvb",
+        "repo": "stop-names",
+        "type": "github"
       }
     },
     "utils": {

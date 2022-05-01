@@ -1,19 +1,24 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = github:NixOS/nixpkgs/nixos-unstable;
 
     naersk = {
-      url = "github:nix-community/naersk";
+      url = github:nix-community/naersk;
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     utils = {
-      url = "github:numtide/flake-utils";
+      url = github:numtide/flake-utils;
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    stops = {
+      url = github:dump-dvb/stop-names;
+      flake = false;
     };
   };
 
-  outputs = { self, nixpkgs, naersk, utils, ... }:
+  outputs = { self, nixpkgs, naersk, utils, stops, ... }:
     utils.lib.eachDefaultSystem
       (system:
         let
@@ -21,6 +26,7 @@
 
           package = pkgs.callPackage ./derivation.nix {
             naersk = naersk.lib.${system};
+            stops = stops;
           };
         in
         rec {

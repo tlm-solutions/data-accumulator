@@ -13,6 +13,8 @@ pub mod dvb_dump{
     tonic::include_proto!("dvbdump");
 }
 
+use tonic::transport::Endpoint;
+
 use actix_web::{web, App, HttpServer, Responder};
 use std::env;
 use std::sync::{RwLock};
@@ -42,7 +44,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
 
         let default_public_api = String::from("http://127.0.0.1:50051");
-        let url_public_api = env::var("PUBLIC_API").unwrap_or(default_public_api);
+        let url_public_api = Endpoint::from_shared(env::var("PUBLIC_API").unwrap_or(default_public_api)).unwrap();
 
         //let default_public_api = String::from("../stops.json");
         //let url_public_api = env::var("STOPS_CONFIG").unwrap_or(default_public_api);
@@ -50,7 +52,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let writing_file_response = Processor::dump_to_file(&csv_file, &telegram);
 
         println!("NEW Received Formatted Record: {:?}", &telegram);
-        let mut client = ReceivesTelegramsClient::connect(&url_public_api).await.unwrap();
+        let mut client = ReceivesTelegramsClient::connect(url_public_api).await.unwrap();
 
         const FILE_STR: &'static str = include_str!("../stops.json");
         let parsed: HashMap<String, StopConfig> = serde_json::from_str(&FILE_STR).expect("JSON was not well-formatted");
@@ -82,7 +84,9 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
             status: 0,
             lat: lat as f32,
             lon: lon as f32,
-            station_name: station_name
+            station_name: station_name,
+            run_number: telegram.run_number,
+            train_length: telegram.train_length
         });
 
         let response = client.receive_new(request);
