@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash};
 use std::hash::Hasher;
+use std::convert::From;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Telegram {
@@ -31,6 +32,16 @@ pub struct RawData {
     raw_data: Vec<u8>,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ReducedTelegram {
+    pub time_stamp: u64,
+    pub position_id: u64,
+    pub line: u32,
+    pub delay: i32,
+    pub direction: u8,
+    pub destination_number: u32
+}
+
 impl Hash for Telegram {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.line.hash(state);
@@ -47,3 +58,17 @@ impl Hash for Telegram {
         self.junction_number.hash(state);
     }
 }
+
+/*impl From<Telegram> for ReducedTelegram {
+    fn from(tele: &Telegram) -> Self {
+        let delay = (tele.sign_of_deviation * 2 - 1) * tele.value_of_deviation;
+        ReducedTelegram {
+            time_stamp: tele.time_stamp,
+            position_id: tele.reporting_point,
+            line: tele.line,
+            delay: delay,
+            direction: tele.run_number,
+            destination_number: tele.destination_number
+        }
+    }
+} */

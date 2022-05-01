@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package dvbdump;
+
+service ReceivesTelegrams {
+  rpc receive_new (ReducedTelegram) returns (ReturnCode) {}
+}
+
+message ReducedTelegram {
+    uint64 time_stamp = 1;
+    uint32 position_id = 2;
+    uint32 direction = 3;
+    uint32 status = 4;
+    uint32 line = 5;
+    int32 delay = 6;
+    uint32 destination_number = 7;
+    float lat = 8;
+    float lon = 9;
+}
+
+message ReturnCode {
+  int32 status = 1;
+}

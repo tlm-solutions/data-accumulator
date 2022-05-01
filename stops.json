@@ -1,0 +1,213 @@
+{
+    "102": {
+        "name": "LSA Anton-/Leipziger Straße",
+        "lat": 51.063033,
+        "lon": 13.736958
+    },
+    "103": {
+        "name": "Anton-/Zur Eisenbahnstraße",
+		"lat": 51.064067,
+		"lon": 13.736935
+	},
+    "104": {
+		"name": "Schlesischer Platz",
+		"lat": 51.064783,
+		"lon": 13.740362
+	},
+    "107": {
+		"name": "Albertplatz",
+		"lat": 51.063252,
+		"lon": 13.746367
+	},
+    "108": {
+		"name": "Albertplatz West",
+		"lat": 51.064241,
+		"lon": 13.744951
+	},
+    "109": {
+		"name": "Bautzner/Rothenburger",
+		"lat": 51.062925,
+		"lon": 13.751871
+	},
+    "119": {
+		"name": "Straßburger Platz",
+		"lat": 51.046078,
+		"lon": 13.754815
+	},
+    "120": {
+		"name": "Lennéstraße/Hauptallee",
+		"lat": 51.042455,
+		"lon": 13.751296
+	},
+    "121": {
+		"name": "Lennéplatz",
+		"lat": 51.038294,
+		"lon": 13.746646
+	},
+    "136": {
+		"name": "Könneritzstraße/Jahnstraße",
+		"lat": 51.055101,
+		"lon": 13.723554
+	},
+
+    "200": {
+		"name": "Synagoge",
+		"lat": 51.052611,
+		"lon": 13.747128
+	},
+    "201": {
+		"name": "St. Petersburger Straße/Pulmann-Newa",
+		"lat": 51.042306,
+		"lon": 13.736348
+	},
+    "203": {
+		"name": "Pirnaischer Platz",
+		"lat": 51.049434,
+		"lon": 13.744379
+	},
+    "204": {
+		"name": "Rathenauplatz",
+		"lat": 51.051463,
+		"lon": 13.747008
+	},
+    "205": {
+		"name": "Carolaplatz",
+		"lat": 51.057410,
+		"lon": 13.745794
+	},
+    "208": {
+		"name": "Bodenbacher / Zwinglistraße",
+		"lat": 51.033500,
+		"lon": 13.782810
+	},
+    "268": {
+		"name": "Albertplatz Süd",
+		"lat": 51.061454,
+		"lon": 13.746032
+	},
+
+    "324": {
+		"name": "Fetscherplatz",
+		"lat": 51.046367,
+		"lon": 13.770653
+	},
+    "346": {
+		"name": "Schillerplatz",
+		"lat": 51.052175,
+		"lon": 13.805205
+	},
+    "363": {
+		"name": "Blasewitzer /Fetscherstraße",
+		"lat": 51.052881,
+		"lon": 13.777738
+	},
+
+    "421": {
+		"name": "Wasaplatz",
+		"lat": 51.027979,
+		"lon": 13.759444
+	},
+    "429": {
+		"name": "Moränenende/Breitscheidstraße",
+		"lat": 51.0135254,
+		"lon": 13.8110393
+	},
+    "435": {
+		"name": "Moränenende/Wilhelm-Liebknecht-Straße",
+		"lat": 51.0125937,
+		"lon": 13.8100717
+	},
+    "459": {
+		"name": "Mügelner Straße/Moränenende",
+		"lat": 51.0112617,
+		"lon": 13.8079246
+	},
+    "504": {
+		"name": "Reichenbachstraße",
+		"lat": 51.0348507,
+		"lon": 13.7312898
+	},
+    "506": {
+		"name": "Fritz-Foerster-Platz",
+		"lat": 51.0301741,
+		"lon": 13.7307460
+	},
+    "604": {
+		"name": "Nürnberger/Budapester Str.",
+		"lat": 51.0369342,
+		"lon": 13.7157618
+	},
+    "606": {
+		"name": "Chemnitzer/Nöthritzer Str.",
+		"lat": 51.0292989,
+		"lon": 13.7071278
+	},
+    "651": {
+		"name": "Nürnberger Platz",
+		"lat": 51.0323243,
+		"lon": 13.7261459
+	},
+    "804": {
+		"name": "Tharandter/Kesselsdorfer Straße",
+		"lat": 51.0436693,
+		"lon": 13.7043013
+	},
+    "851": {
+		"name": "Löbtauer Straße/Fröbelstraße",
+		"lat": 51.0500279,
+		"lon": 13.7126293
+	},
+    "1101": {
+		"name": "Louisenstraße",
+		"lat": 51.0680048,
+		"lon": 13.7477077
+	},
+    "1102": {
+		"name": "Bischofsweg",
+		"lat": 51.0713760,
+		"lon": 13.7506816
+	},
+    "1103": {
+		"name": "Tannenstraße",
+		"lat": 51.0737276,
+		"lon": 13.7528442
+	},
+    "1104": {
+		"name": "Staufenbergallee",
+		"lat": 51.0766329,
+		"lon": 13.7555318
+	},
+    "1202": {
+		"name": "Bautzner Straße/Pulsnitzer",
+		"lat": 51.0633116,
+		"lon": 13.7575165
+	},
+    "1203": {
+		"name": "Pulsnitzer Straße",
+		"lat": 51.0633708,
+		"lon": 13.7578833
+	},
+    "1205": {
+		"name": "Diakonissenkrankenhaus",
+		"lat": 51.0641348,
+		"lon": 13.7621847
+	},
+    "1220": {
+		"name": "Nordstraße",
+		"lat": 51.0661350,
+		"lon": 13.7694067
+	},
+
+    "1301": {
+		"name": "Körnerplatz/Grundstr.",
+		"lat": 51.0539600, 	
+        "lon": 13.8150960
+	},
+
+    "1501": {
+		"name": "Hansastraße/Eisenbahnstraße",
+		"lat": 51.0657888,	
+        "lon": 13.7381732
+	}
+}
+

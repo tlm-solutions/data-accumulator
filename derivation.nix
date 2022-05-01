@@ -1,4 +1,4 @@
-{ naersk, src, lib, pkg-config }:
+{ naersk, src, lib, pkg-config, cmake, protobuf }:
 
 naersk.buildPackage {
   pname = "data-accumulator";
@@ -8,7 +8,7 @@ naersk.buildPackage {
 
   cargoSha256 = lib.fakeSha256;
 
-  nativeBuildInputs = [ pkg-config ];
+  nativeBuildInputs = [ pkg-config cmake protobuf ];
   #buildInputs = [ openssl libpqxx libiconv postgresql git ];
 
   meta = with lib; {
