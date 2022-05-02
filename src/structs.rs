@@ -1,8 +1,8 @@
-extern crate derive_builder;
 extern crate clap;
+extern crate derive_builder;
 
-use serde::{Deserialize, Serialize};
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Response {
@@ -22,12 +22,12 @@ pub struct Args {
     pub port: u16,
 
     #[clap(short, long, default_value_t = String::from("http://[::1]:50051"))]
-    pub grpc_host: String 
+    pub grpc_host: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct StopConfig {
     pub name: String,
     pub lat: f64,
-    pub lon: f64
+    pub lon: f64,
 }

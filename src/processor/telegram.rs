@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::hash::{Hash};
+use std::hash::Hash;
 use std::hash::Hasher;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -38,7 +38,7 @@ pub struct ReducedTelegram {
     pub line: u32,
     pub delay: i32,
     pub direction: u8,
-    pub destination_number: u32
+    pub destination_number: u32,
 }
 
 impl Hash for Telegram {

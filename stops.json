@@ -401,5 +401,115 @@
         "name": "Rosa-Luxemburg-Platz",
         "lat": 51.059115,
         "lon": 13.752996
+    },
+    "9107": {
+        "name": "Zur Messe / Messering",
+        "lat": 51.068695,
+        "lon": 13.714456
+    },
+    "903": {
+        "name": "Dresden Alberthafen",
+        "lat": 51.062922,
+        "lon": 13.715810
+    },
+    "900": {
+        "name": "Madeburger Str. (crossing to EnergieVerbund Arena)",
+        "lat": 51.061761,
+        "lon": 13.720792
+    },
+    "902": {
+        "name": "Magdeburger Str. / Weisseritzstr.",
+        "lat": 51.058725,
+        "lon": 13.726060
+    },
+    "901": {
+        "name": "Weisseritzstr. / Pieschener Alle",
+        "lat": 51.060234,
+        "lon": 13.727899
+    },
+    "951": {
+        "name": "Weisseritzstr. / Friedrichstr.",
+        "lat": 51.057656,
+        "lon": 13.724963
+    },
+    "999": {
+        "name": "Friedrichstr. / Braeuergasse",
+        "lat": 51.058993,
+        "lon": 13.720930
+    },
+    "904": {
+        "name": "Waltherstr. / Bremer Str.",
+        "lat": 51.061586,
+        "lon": 13.712814
+    },
+    "953": {
+        "name": "Dresden Walterstrasse",
+        "lat": 51.058158,
+        "lon": 13.710172
+    },
+    "956": {
+        "name": "Schaeferstr. / Behringstr.",
+        "lat": 51.055846,
+        "lon": 13.717046
+    },
+    "952": {
+        "name": "Dresden Koreanischer Platz",
+        "lat": 51.054744,
+        "lon": 13.720228
+    },
+    "959": {
+        "name": "Bahnhof Mitte / Weisseritzstr.",
+        "lat": 51.055803,
+        "lon": 13.722244
+    },
+    "960": {
+        "name": "Bahnhof Mitte / Koenneritzstr.",
+        "lat": 51.055086,
+        "lon": 13.723567
+    },
+    "957": {
+        "name": "Berliner str. / Loebtauer str.",
+        "lat": 51.054055,
+        "lon": 13.719069
+    },
+    "995": {
+        "name": "Dresden Hamburger Str.",
+        "lat": 51.059006,
+        "lon": 13.703476
+    },
+    "905": {
+        "name": "Dresden Bremer Str.",
+        "lat": 51.060840,
+        "lon": 13.694162
+    },
+    "90": {
+        "name": "CarGoTram WV Logistikzentrum",
+        "lat": 51.053790,
+        "lon": 13.698442
+    },
+    "859": {
+        "name": "Waltherstr. / Froebelstr.",
+        "lat": 51.051679,
+        "lon": 13.707432
+    },
+    "852": {
+        "name": "Dresden Cottaer Str.",
+        "lat": 51.050072,
+        "lon": 13.712673
+    },
+    "860": {
+        "name": "Froebelstr. / Emerich-Ambros-Ufer",
+        "lat": 51.050829,
+        "lon": 13.704106
+    },
+    "861": {
+        "name": "Dresden Burgkstrasse",
+        "lat": 51.049170,
+        "lon": 13.696968
+    },
+    "862": {
+        "name": "Dresden Pennricher Strasse",
+        "lat": 51.049138,
+        "lon": 13.692045
     }
 }
