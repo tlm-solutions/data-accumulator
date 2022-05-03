@@ -511,5 +511,270 @@
         "name": "Dresden Pennricher Strasse",
         "lat": 51.049138,
         "lon": 13.692045
+    },
+    "139": {
+        "name": "Dresden Kongresszentrum",
+        "lat": 51.057972,
+        "lon": 13.727255
+    },
+    "138": {
+        "name": "Maxstrasse / Koenneritzstr.",
+        "lat": 51.057033,
+        "lon": 13.726101
+    },
+    "135": {
+        "name": "Koenneritzstr. / Schweriner Str.",
+        "lat": 51.054075,
+        "lon": 13.722238
+    },
+    "133": {
+        "name": "Ammonstrasse / Freiberger Str.",
+        "lat": 51.049358,
+        "lon": 13.720690
+    },
+    "134": {
+        "name": "Koenneritzstr. / Ammonstrasse",
+        "lat": 51.051675,
+        "lon": 13.720342
+    },
+    "280": {
+        "name": "Freiberger Str. / Tiefgarage WTC",
+        "lat": 51.049675,
+        "lon": 13.722087
+    },
+    "234": {
+        "name": "Freiberger Str. / Freiberger Platz",
+        "lat": 51.050296,
+        "lon": 13.725170
+    },
+    "220": {
+        "name": "Freiberger Str. / Hertha-Lindner-Strasse",
+        "lat": 51.050873,
+        "lon": 13.729145
+    },
+    "222": {
+        "name": "Postplatz",
+        "lat": 51.050872,
+        "lon": 13.733433
+    },
+    "219": {
+        "name": "Schweriner Str. / Hertha-Lindner-Strasse",
+        "lat": 51.052070,
+        "lon": 13.728905
+    },
+    "233": {
+        "name": "Wettiner Platz",
+        "lat": 51.053502,
+        "lon": 13.724363
+    },
+    "223": {
+        "name": "Wilsdruffer Str. / Schlossstr.",
+        "lat": 51.050486,
+        "lon": 13.737083
+    },
+    "299": {
+        "name": "Wilsdruffer Str. / Galeriestr.",
+        "lat": 51.050153,
+        "lon": 13.739090
+    },
+    "1253": {
+        "name": "Rothenburger Str. / Louisenstr.",
+        "lat": 51.066338,
+        "lon": 13.753906
+    },
+    "1254": {
+        "name": "Goerlitzer Str. / Bischofsweg",
+        "lat": 51.069746,
+        "lon": 13.756130
+    },
+    "1501": {
+        "name": "Eisenbahnstr. / Hansastraße",
+        "lat": 51.065861,
+        "lon": 13.739137
+    },
+    "1502": {
+        "name": "Hansastraße / Loessnitzstr.",
+        "lat": 51.068352,
+        "lon": 13.739317
+    },
+    "1401": {
+        "name": "Grossenhainer Str. / Hansastraße",
+        "lat": 51.069169,
+        "lon": 13.738403
+    },
+    "1003": {
+        "name": "Leipziger Str. 29",
+        "lat": 51.068620,
+        "lon": 13.730891
+    },
+    "1274": {
+        "name": "Bautzner Str. / Jaegerstr.",
+        "lat": 51.066702,
+        "lon": 13.772301
+    },
+    "1208": {
+        "name": "Bautzner Str. / Fischhausstr.",
+        "lat": 51.066964,
+        "lon": 13.785562
+    },
+    "1209": {
+        "name": "Dresden Wilhelminenstrasse",
+        "lat": 51.067198,
+        "lon": 13.789555
+    },
+    "1225": {
+        "name": "Elbschloesser",
+        "lat": 51.065970,
+        "lon": 13.797705
+    },
+    "1259": {
+        "name": "Fischhausstr / Heideparkstr.",
+        "lat": 51.069317,
+        "lon": 13.787302
+    },
+    "113": {
+        "name": "Albertbrueke / Sachsenplatz",
+        "lat": 51.055897,
+        "lon": 13.755917
+    },
+    "111": {
+        "name": "Melanchthonstr. / Hoyerswerdaer Str.",
+        "lat": 51.060455,
+        "lon": 13.752620
+    },
+    "1205": {
+        "name": "Weintraubenstr. / Melanchthonstr.",
+        "lat": 51.061179,
+        "lon": 13.754711
+    },
+    "115": {
+        "name": "Sachsenallee / Gerokstr.",
+        "lat": 51.053918,
+        "lon": 13.758129
+    },
+    "360": {
+        "name": "Gerokstr. / Elisenstr.",
+        "lat": 51.053229,
+        "lon": 13.761923
+    },
+    "395": {
+        "name": "Gerokstr. 16",
+        "lat": 51.053111,
+        "lon": 13.763297
+    },
+    "118": {
+        "name": "Striesener Str. / Pillnitzer Str.",
+        "lat": 51.049758,
+        "lon": 13.757163
+    },
+    "236": {
+        "name": "Pillnitzer Str. / Mathildenstr.",
+        "lat": 51.050354,
+        "lon": 13.753300
+    },
+    "322": {
+        "name": "Striesener Str. / Hans-Grundig-Str.",
+        "lat": 51.049177,
+        "lon": 13.760643
+    },
+    "228": {
+        "name": "Dippoldiswalder Platz",
+        "lat": 51.046909,
+        "lon": 13.734702
+    },
+    "202": {
+        "name": "Georgplatz",
+        "lat": 51.046395,
+        "lon": 13.741428
+    },
+    "292": {
+        "name": "St. Petersburger Str. 21",
+        "lat": 51.045149,
+        "lon": 13.739975
+    },
+    "122": {
+        "name": "Wiener Str. / Franklinstr.",
+        "lat": 51.037239,
+        "lon": 13.744522
+    },
+    "362": {
+        "name": "Fetscherstraße / Pfotenhauerstr.",
+        "lat": 51.058734,
+        "lon": 13.777413
+    },
+    "363": {
+        "name": "Duererstr. / Fetscherstraße",
+        "lat": 51.050828,
+        "lon": 13.775656
+    },
+    "3176": {
+        "name": "Fetscherstraße / Gabelsbergerstr.",
+        "lat": 51.049781,
+        "lon": 13.774610
+    },
+    "393": {
+        "name": "Borsbergstr. / Mosenstr.",
+        "lat": 51.044786,
+        "lon": 13.777631
+    },
+    "381": {
+        "name": "Borsbergstr. / Spenerstr.",
+        "lat": 51.043940,
+        "lon": 13.781547
+    },
+    "327": {
+        "name": "Schandauer Str. / Bergmannstr.",
+        "lat": 51.043311,
+        "lon": 13.788805
+    },
+    "328": {
+        "name": "Pohlandplatz",
+        "lat": 51.042901,
+        "lon": 13.795439
+    },
+    "3101": {
+        "name": "Niederwaldpl. / Scariastr.",
+        "lat": 51.044470,
+        "lon": 13.807889
+    },
+    "347": {
+        "name": "Am Schillergarten / Tolkewitzer Str.",
+        "lat": 51.050877,
+        "lon": 13.808274
+    },
+    "361": {
+        "name": "Hueblerstr. / Berggartenstr.",
+        "lat": 51.051124,
+        "lon": 13.803719
+    },
+    "503": {
+        "name": "Fritz-Löffler-Str. 16",
+        "lat": 51.035964,
+        "lon": 13.731757
+    },
+    "3107": {
+        "name": "Fetscherstraße / Tatzberg",
+        "lat": 51.056047,
+        "lon": 13.777544
+    },
+    "3150": {
+        "name": "Fetscherstraße / Fiedlerstr.",
+        "lat": 51.053950,
+        "lon": 13.777849
+    },
+    "378": {
+        "name": "Königsheimplatz",
+        "lat": 51.053808,
+        "lon": 13.786601
+    },
+    "376": {
+        "name": "Blasewitzer Str. / Augsburger Str.",
+        "lat": 51.053259,
+        "lon": 13.781579
+    },
+    "3106": {
+        "name": "Loschwitzer Str. / Lene-Glatzer-Str.",
+        "lat": 51.053834,
+        "lon": 13.792404
     }
 }
