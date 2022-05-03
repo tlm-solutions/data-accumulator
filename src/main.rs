@@ -20,6 +20,7 @@ use std::env;
 use std::sync::{RwLock};
 use clap::Parser;
 use std::collections::HashMap;
+use std::u32;
 
 async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<Telegram>) -> impl Responder {
 
@@ -77,15 +78,15 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let request = tonic::Request::new(ReducedTelegram {
             time_stamp: telegram.time_stamp,
             position_id: telegram.junction,
-            line: telegram.line,
+            line: u32::from_str_radix(&telegram.line, 16).unwrap(),
             delay: ((telegram.sign_of_deviation as i32) * 2 - 1) * telegram.value_of_deviation as i32,
-            direction: telegram.run_number,
+            direction: 0,
             destination_number: telegram.junction_number,
             status: 0,
             lat: lat as f32,
             lon: lon as f32,
             station_name: station_name,
-            run_number: telegram.run_number,
+            run_number: u32::from_str_radix(&telegram.run_number, 16).unwrap(),
             train_length: telegram.train_length
         });
 
