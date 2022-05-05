@@ -3,17 +3,17 @@
     "lat": 0.0,
     "lon": 0.0,
     "station_id": 0,
-    "line": 2,
-    "destination_number": 0,
+    "line": "014",
+    "destination_number": "09",
     "priority": 0,
-    "sign_of_deviation": 0,
+    "sign_of_deviation": 1,
     "value_of_deviation": 1,
     "reporting_point": 0,
     "request_for_priority": 0,
-    "run_number": 0,
+    "run_number": "09",
     "reserve": 0,
     "train_length": 0,
     "junction": 0,
-    "junction_number": 0
+    "junction_number": 0,
+    "request_status": 0
 }
-
