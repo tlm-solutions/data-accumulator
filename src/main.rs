@@ -53,7 +53,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let writing_file_response = Processor::dump_to_file(&csv_file, &telegram);
 
         println!("NEW Received Formatted Record: {:?}", &telegram);
-        let mut client = ReceivesTelegramsClient::connect(url_public_api).await.unwrap();
+        
 
         const FILE_STR: &'static str = include_str!("../stops.json");
         let parsed: HashMap<String, StopConfig> = serde_json::from_str(&FILE_STR).expect("JSON was not well-formatted");
@@ -90,10 +90,16 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
             train_length: telegram.train_length
         });
 
-        let response = client.receive_new(request);
+        match ReceivesTelegramsClient::connect(url_public_api).await {
+            Ok(mut client) => {
+                client.receive_new(request).await;
+            }
+            Err(_) => {
+                println!("Cannot connect to GRPC Host");
+            }
+        };
 
         writing_file_response.await;
-        response.await;
     }
 
     web::Json(Response { success: true })
