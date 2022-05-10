@@ -2,9 +2,13 @@ extern crate clap;
 
 mod structs;
 mod processor;
+mod stations;
+mod storage;
 
 use structs::{Response, Args, StopConfig};
 use processor::{Processor, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
+use stations::{Station};
+pub use storage::{SaveTelegram, Storage, InfluxDB};
 
 use dvb_dump::receives_telegrams_client::{ReceivesTelegramsClient};
 use dvb_dump::{ ReducedTelegram };
@@ -15,14 +19,16 @@ pub mod dvb_dump{
 
 use tonic::transport::Endpoint;
 
-use actix_web::{web, App, HttpServer, Responder};
+use actix_web::{web, App, HttpServer, Responder, HttpRequest};
 use std::env;
 use std::sync::{RwLock};
 use clap::Parser;
 use std::collections::HashMap;
 use std::u32;
 
-async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<Telegram>) -> impl Responder {
+async fn formatted(processor: web::Data<RwLock<Processor>>,
+                   telegram: web::Json<Telegram>, 
+                   req: HttpRequest) -> impl Responder {
 
     let telegram_hash = Processor::calculate_hash(&telegram).await;
     let contained;
@@ -31,6 +37,7 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         let readable_processor = processor.read().unwrap();
         contained = readable_processor.last_elements.contains(&telegram_hash);
     }
+
     // updates the buffer adding the new telegram
     {
         let mut writeable_processor = processor.write().unwrap();
@@ -39,28 +46,63 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
         writeable_processor.iterator = (writeable_processor.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
+    let ip_address;
+    if let Some(val) = req.peer_addr() {
+        ip_address = val.ip().to_string();
+        println!("Address {:?}", val.ip());
+    } else {
+        return web::Json(Response { success: false });
+    }
+
     // do more processing
     if !contained {
-        let default_file = String::from("/var/lib/data-accumulator/formatte_data.csv");
-        let csv_file = env::var("PATH_FORMATTED_DATA").unwrap_or(default_file);
-
         let default_public_api = String::from("http://127.0.0.1:50051");
         let url_public_api = Endpoint::from_shared(env::var("PUBLIC_API").unwrap_or(default_public_api)).unwrap();
 
         //let default_public_api = String::from("../stops.json");
         //let url_public_api = env::var("STOPS_CONFIG").unwrap_or(default_public_api);
 
-        let writing_file_response = Processor::dump_to_file(&csv_file, &telegram);
+        let save = SaveTelegram::from(&*telegram, &ip_address);
+        {
+            let mut writeable_processor = processor.write().unwrap();
+            writeable_processor.write(save).await;
+
+        }
 
         println!("NEW Received Formatted Record: {:?}", &telegram);
-        
 
-        const FILE_STR: &'static str = include_str!("../stops.json");
-        let parsed: HashMap<String, StopConfig> = serde_json::from_str(&FILE_STR).expect("JSON was not well-formatted");
+        const FILE_STR: &str = include_str!("../stops.json");
+        let parsed: HashMap<String, StopConfig> = serde_json::from_str(FILE_STR).expect("JSON was not well-formatted");
 
         let lat;
         let lon;
         let station_name;
+
+        // dont cry code reader this will TM be replaced by postgress look up 
+        // revol-xut May the 8 2022
+        let stations = HashMap::from([
+            (String::from("10.13.37.100"), Station {
+                name: String::from("Barkhausen/Turmlabor"),
+                lat: 51.026107,
+                lon: 13.623566,
+                station_id: 0,
+                region_id: 0  
+            }),
+            (String::from("10.13.37.101"), Station {
+                name: String::from("Zentralwerk"),
+                lat: 51.0810632,
+                lon: 13.7280758,
+                station_id: 1,
+                region_id: 0,
+            }),
+            (String::from("10.13.37.102"), Station {
+                name: String::from(""),
+                lat: 51.0810632,
+                lon: 13.7280758,
+                station_id: 2,
+                region_id: 1 
+            }),
+        ]);
 
         match parsed.get(&telegram.junction.to_string()) {
             Some(data) => {
@@ -75,19 +117,29 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
             }
         }
 
+        let region_code = match stations.get(&ip_address) {
+            Some(station) => {
+                station.region_id
+            }
+            None => {
+                return web::Json(Response { success: false });
+            }
+        };
+
         let request = tonic::Request::new(ReducedTelegram {
             time_stamp: telegram.time_stamp,
             position_id: telegram.junction,
+            direction: telegram.request_for_priority,
+            status: telegram.request_status,
             line: telegram.line.parse::<u32>().unwrap_or(0),
             delay: ((telegram.sign_of_deviation as i32) * 2 - 1) * telegram.value_of_deviation as i32,
-            direction: 0,
             destination_number: telegram.destination_number.parse::<u32>().unwrap_or(0),
-            status: 0,
+            run_number: telegram.run_number.parse::<u32>().unwrap_or(0),
             lat: lat as f32,
             lon: lon as f32,
-            station_name: station_name,
-            run_number: telegram.run_number.parse::<u32>().unwrap_or(0),
-            train_length: telegram.train_length
+            station_name,
+            train_length: telegram.train_length,
+            region_code
         });
 
         match ReceivesTelegramsClient::connect(url_public_api).await {
@@ -98,19 +150,17 @@ async fn formatted(processor: web::Data<RwLock<Processor>>, telegram: web::Json<
                 println!("Cannot connect to GRPC Host");
             }
         };
-
-        writing_file_response.await;
     }
 
     web::Json(Response { success: true })
 }
 
 async fn raw(telegram: web::Json<RawData>) -> impl Responder {
-    let default_file = String::from("/var/lib/data-accumulator/raw_data.csv");
-    let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
+    //let default_file = String::from("/var/lib/data-accumulator/raw_data.csv");
+    //let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
 
     println!("Received Formatted Record: {:?}", &telegram);
-    Processor::dump_to_file(&csv_file, &telegram).await;
+    //Processor::dump_to_file(&csv_file, &telegram).await;
 
     web::Json(Response { success: true })
 }

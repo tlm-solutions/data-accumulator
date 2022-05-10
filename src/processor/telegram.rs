@@ -6,9 +6,6 @@ use std::hash::Hasher;
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Telegram {
     pub time_stamp: u64,
-    pub lat: f64,
-    pub lon: f64,
-    pub station_id: u32,
     pub line: String,
     pub destination_number: String,
     pub priority: u32,
@@ -27,9 +24,6 @@ pub struct Telegram {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct RawData {
     time_stamp: u64,
-    lat: f64,
-    lon: f64,
-    station_id: u32,
     raw_data: Vec<u8>,
 }
 

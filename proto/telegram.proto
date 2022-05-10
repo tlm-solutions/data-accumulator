@@ -19,6 +19,7 @@ message ReducedTelegram {
     float lon = 10;
     string station_name = 11;
     uint32 train_length = 12;
+    uint32 region_code = 13;
 }
 
 message ReturnCode {
