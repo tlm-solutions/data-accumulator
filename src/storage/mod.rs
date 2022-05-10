@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use influxdb::{Client};
 use influxdb::InfluxDbWriteable;
 use chrono::{DateTime, Utc, TimeZone};
+use tokio::runtime::Handle;
+use futures::executor;
 
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {
@@ -91,25 +93,24 @@ impl Storage for CSVFile {
         wtr.flush();
     }
 }
-impl Storage for InfluxDB {
-    fn new(resource: &String) -> InfluxDB {
+impl InfluxDB {
+    pub fn new(resource: &String) -> InfluxDB {
         InfluxDB {
             uri: resource.to_string(),
-            client: Client::new(resource, "dvb-dump")
+            client: Client::new(resource, "dvbdump")
         }
     }
-    fn write(&mut self, data: SaveTelegram) {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let write_result = rt.block_on(self.client
-            .query(data.into_query("telegram-r09"))); 
+    pub async fn write(&mut self, data: SaveTelegram) {
+        let handle = Handle::current();
+        let write_result = self.client.query(data.into_query("telegramr09")).await;
 
         match write_result {
-            Ok(_) => { 
+            Ok(_) => {
                 println!("Sucessfully wrote into influxdb");
             }
             Err(_) => {
                 println!("Connection Timeout to InfluxDB. Reopening Connection.");
-                self.client = Client::new(&self.uri, "dvb-dump");
+                self.client = Client::new(&self.uri, "dvbdump");
             }
         }
     }

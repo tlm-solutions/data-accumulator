@@ -61,15 +61,12 @@ async fn formatted(processor: web::Data<RwLock<Processor>>,
 
         //let default_public_api = String::from("../stops.json");
         //let url_public_api = env::var("STOPS_CONFIG").unwrap_or(default_public_api);
-
         let save = SaveTelegram::from(&*telegram, &ip_address);
         {
             let mut writeable_processor = processor.write().unwrap();
             writeable_processor.write(save).await;
 
         }
-
-        println!("NEW Received Formatted Record: {:?}", &telegram);
 
         const FILE_STR: &str = include_str!("../stops.json");
         let parsed: HashMap<String, StopConfig> = serde_json::from_str(FILE_STR).expect("JSON was not well-formatted");
