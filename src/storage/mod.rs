@@ -4,11 +4,12 @@ use super::{Telegram};
 use csv::{WriterBuilder};
 use std::fs::{File, OpenOptions};
 use serde::{Deserialize, Serialize};
-use influxdb::{Client};
+use influxdb::{Client, ReadQuery};
 use influxdb::InfluxDbWriteable;
 use chrono::{DateTime, Utc, TimeZone};
-use tokio::runtime::Handle;
-use futures::executor;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc;
+use std::thread;
 
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {
@@ -59,19 +60,21 @@ pub trait Storage {
 pub struct InfluxDB {
     pub uri: String,
     client: Client
+    //source: Receiver<SaveTelegram>,
+    //sink: Sender<SaveTelegram>,
 }
 
 pub struct CSVFile {
     pub file_path: String,
 }
 
-impl Storage for CSVFile {
-    fn new(resource: &String) -> CSVFile {
+impl CSVFile {
+    pub fn new(resource: &String) -> CSVFile {
         CSVFile {
             file_path: resource.clone(),
         }
     }
-    fn write(&mut self, data: SaveTelegram) {
+    pub async  fn write(&mut self, data: SaveTelegram) {
         let file: File;
         let mut file_existed: bool = true;
         if std::path::Path::new(&self.file_path).exists() {
@@ -95,24 +98,34 @@ impl Storage for CSVFile {
 }
 impl InfluxDB {
     pub fn new(resource: &String) -> InfluxDB {
-        InfluxDB {
+        println!("Influx Connects to {}", &resource);
+
+        let influx = InfluxDB {
             uri: resource.to_string(),
             client: Client::new(resource, "dvbdump")
-        }
-    }
-    pub async fn write(&mut self, data: SaveTelegram) {
-        let handle = Handle::current();
-        let write_result = self.client.query(data.into_query("telegramr09")).await;
+        };
 
+        influx
+    }
+
+    pub async fn prepare_influxdb(&self) {
+        let create_db_stmt = "CREATE DATABASE dvbdump";
+        self.client
+            .query(&ReadQuery::new(create_db_stmt))
+            .await
+            .expect("failed to create database");
+    }
+
+    pub async fn write(&mut self, data: SaveTelegram) {
+        let write_result = self.client.query(data.into_query("telegram_r_09")).await;
         match write_result {
-            Ok(_) => {
-                println!("Sucessfully wrote into influxdb");
-            }
+            Ok(_) => { }
             Err(_) => {
                 println!("Connection Timeout to InfluxDB. Reopening Connection.");
-                self.client = Client::new(&self.uri, "dvbdump");
+                //self.client = Client::new(&self.uri, "dvbdump");
             }
         }
+        //self.Sender.send(telegram);
     }
 }
 

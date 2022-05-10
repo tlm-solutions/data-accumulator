@@ -15,11 +15,8 @@ message ReducedTelegram {
     int32 delay = 6;
     uint32 destination_number = 7;
     uint32 run_number = 8;
-    float lat = 9;
-    float lon = 10;
-    string station_name = 11;
-    uint32 train_length = 12;
-    uint32 region_code = 13;
+    uint32 train_length = 9;
+    uint32 region_code = 10;
 }
 
 message ReturnCode {
