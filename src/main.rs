@@ -6,28 +6,16 @@ mod processor;
 mod stations;
 mod storage;
 
-use structs::{Response, Args, StopConfig};
+use structs::{Response, Args};
 pub use filter::{Filter, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 use processor::{Processor};
 pub use stations::{Station};
 pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
 
-use dvb_dump::receives_telegrams_client::{ReceivesTelegramsClient};
-use dvb_dump::{ ReducedTelegram };
-
-pub mod dvb_dump{
-    tonic::include_proto!("dvbdump");
-}
-
-use tonic::transport::Endpoint;
-
 use actix_web::{web, App, HttpServer, Responder, HttpRequest};
-use std::env;
-use std::sync::{RwLock, Arc, Mutex};
+use std::sync::{RwLock, Mutex};
 use clap::Parser;
-use std::collections::HashMap;
-use std::u32;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender};
 use std::sync::mpsc;
 use std::thread;
 
@@ -36,7 +24,6 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                    telegram: web::Json<Telegram>, 
                    req: HttpRequest) -> impl Responder {
 
-    println!("Request");
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
@@ -53,16 +40,15 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
-    let ip_address;
-    if let Some(val) = req.peer_addr() {
-        ip_address = val.ip().to_string();
-    } else {
-        return web::Json(Response { success: false });
-    }
-
     // do more processing
     if !contained {
-        println!("Thrown into the queue");
+        let ip_address;
+        if let Some(val) = req.peer_addr() {
+            ip_address = val.ip().to_string();
+        } else {
+            return web::Json(Response { success: false });
+        }
+
         let unlocked = sender.lock().unwrap();
         unlocked.send(((*telegram).clone(), ip_address));
     }

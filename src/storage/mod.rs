@@ -7,9 +7,6 @@ use serde::{Deserialize, Serialize};
 use influxdb::{Client, ReadQuery};
 use influxdb::InfluxDbWriteable;
 use chrono::{DateTime, Utc, TimeZone};
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::mpsc;
-use std::thread;
 
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {

@@ -1,10 +1,7 @@
 
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::mpsc;
-use std::thread;
+use std::sync::mpsc::{Receiver};
 use std::env;
 use std::collections::HashMap;
-use tonic::transport::Endpoint;
 
 use super::{InfluxDB};
 use super::{Telegram, SaveTelegram, Station};
@@ -15,8 +12,6 @@ use dvb_dump::{ ReducedTelegram };
 pub mod dvb_dump{
     tonic::include_proto!("dvbdump");
 }
-
-
 
 pub struct Processor {
     database: InfluxDB,
@@ -30,7 +25,7 @@ impl Processor {
         let default_influx_host = String::from("http://localhost:8086");
         let influx_host = env::var("INFLUX_HOST").unwrap_or(default_influx_host);
 
-        let default_grpc_host = String::from("0.0.0.0:51119");
+        let default_grpc_host = String::from("http://127.0.0.1:50051");
         let grpc_host = env::var("GRPC_HOST").unwrap_or(default_grpc_host);
 
         Processor {
@@ -41,10 +36,8 @@ impl Processor {
     }
 
     pub async fn processing_loop(&mut self) {
-        println!("Starting Loop");
         loop {
             let (telegram, ip) = self.receiver.recv().unwrap();
-            println!("Current Telegram: {:?}", &telegram);
             let save = SaveTelegram::from(&telegram, &ip);
             self.database.write(save).await;
 
@@ -75,7 +68,7 @@ impl Processor {
             ]);
 
 
-            let region_code = match stations.get(&ip) {
+            match stations.get(&ip) {
                 Some(station) => {
 
                     let request = tonic::Request::new(ReducedTelegram {

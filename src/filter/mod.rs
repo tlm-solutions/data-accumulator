@@ -5,7 +5,6 @@ pub use telegram::{Telegram, RawData};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 use std::hash::Hash;
-use std::env;
 
 pub const DEPULICATION_BUFFER_SIZE: usize = 20;
 
