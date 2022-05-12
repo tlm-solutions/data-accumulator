@@ -15,12 +15,12 @@ pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
 use actix_web::{web, App, HttpServer, Responder, HttpRequest};
 use std::sync::{RwLock, Mutex};
 use clap::Parser;
-use std::sync::mpsc::{Sender};
+use std::sync::mpsc::{SyncSender};
 use std::sync::mpsc;
 use std::thread;
 
 async fn formatted(filter: web::Data<RwLock<Filter>>,
-                   sender: web::Data<Mutex<Sender<(Telegram, String)>>>,
+                   sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
                    telegram: web::Json<Telegram>, 
                    req: HttpRequest) -> impl Responder {
 
@@ -50,7 +50,7 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
         }
 
         let unlocked = sender.lock().unwrap();
-        unlocked.send(((*telegram).clone(), ip_address));
+        unlocked.send(((*telegram).clone(), ip_address)).unwrap();
     }
 
     web::Json(Response { success: true })
@@ -77,7 +77,7 @@ async fn main() -> std::io::Result<()> {
 
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
-    let (sender, receiver) = mpsc::channel::<(Telegram, String)>();
+    let (sender, receiver) = mpsc::sync_channel::<(Telegram, String)>(200);
 
     thread::spawn(move || {
         let mut processor = Processor::new(receiver);
