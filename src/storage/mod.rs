@@ -6,7 +6,7 @@ use std::fs::{File, OpenOptions};
 use serde::{Deserialize, Serialize};
 use influxdb::{Client, ReadQuery};
 use influxdb::InfluxDbWriteable;
-use chrono::{DateTime, Utc, TimeZone};
+use chrono::{DateTime, Utc};
 
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {
@@ -30,7 +30,7 @@ pub struct SaveTelegram {
 impl SaveTelegram {
     pub fn from(telegram: &Telegram, ip: &str) -> SaveTelegram {
         SaveTelegram {
-            time: Utc.timestamp(telegram.time_stamp as i64, 0),
+            time: Utc::now(),
             ip: ip.to_owned(),
             station_id: telegram.reporting_point,
             line: telegram.line.clone(),

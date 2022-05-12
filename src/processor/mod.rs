@@ -2,6 +2,7 @@
 use std::sync::mpsc::{Receiver};
 use std::env;
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use super::{InfluxDB, CSVFile};
 use super::{Telegram, SaveTelegram, Station};
@@ -75,9 +76,14 @@ impl Processor {
 
             match stations.get(&ip) {
                 Some(station) => {
+                    let start = SystemTime::now();
+                    let since_the_epoch = start
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Time went backwards")
+                        .as_secs();
 
                     let request = tonic::Request::new(ReducedTelegram {
-                        time_stamp: telegram.time_stamp,
+                        time_stamp: since_the_epoch,
                         position_id: telegram.junction,
                         direction: telegram.request_for_priority,
                         status: telegram.request_status,

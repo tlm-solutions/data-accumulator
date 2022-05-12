@@ -5,7 +5,6 @@ use std::hash::Hasher;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Telegram {
-    pub time_stamp: u64,
     pub line: String,
     pub destination_number: String,
     pub priority: u32,
