@@ -11,18 +11,18 @@ use chrono::{DateTime, Utc, TimeZone};
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {
     pub time: DateTime<Utc>,
-    pub ip: String,
-    pub station_id: u32,
-    pub line: String,
+    #[influxdb(tag)] pub ip: String,
+    #[influxdb(tag)] pub station_id: u32,
+    #[influxdb(tag)] pub line: String,
+    #[influxdb(tag)] pub run_number: String,
+    #[influxdb(tag)] pub reporting_point: u32,
+    pub junction: u32,
     pub destination_number: String,
     pub priority: u32,
     pub delay: i32,
-    pub reporting_point: u32,
     pub direction_request: u32,
-    pub run_number: String,
     pub reserve: u32,
     pub train_length: u32,
-    pub junction: u32,
     pub junction_number: u32,
     pub request_status: u32,
 }
@@ -121,10 +121,9 @@ impl InfluxDB {
             Ok(_) => { }
             Err(_) => {
                 println!("Connection Timeout to InfluxDB. Reopening Connection.");
-                //self.client = Client::new(&self.uri, "dvbdump");
+                self.client = Client::new(&self.uri, "dvbdump");
             }
         }
-        //self.Sender.send(telegram);
     }
 }
 
