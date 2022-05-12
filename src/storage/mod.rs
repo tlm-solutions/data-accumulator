@@ -71,6 +71,7 @@ impl CSVFile {
             file_path: resource.clone(),
         }
     }
+
     pub async  fn write(&mut self, data: SaveTelegram) {
         let file: File;
         let mut file_existed: bool = true;
@@ -93,6 +94,7 @@ impl CSVFile {
         wtr.flush();
     }
 }
+
 impl InfluxDB {
     pub fn new(resource: &String) -> InfluxDB {
         println!("Influx Connects to {}", &resource);
