@@ -49,6 +49,7 @@ impl Processor {
     }
 
     pub async fn processing_loop(&mut self) {
+        self.database.setup().await;
         loop {
             let (telegram, ip) = self.receiver.recv().unwrap();
             let save = SaveTelegram::from(&telegram, &ip);

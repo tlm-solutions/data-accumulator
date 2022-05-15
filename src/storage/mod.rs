@@ -53,6 +53,7 @@ impl SaveTelegram {
 #[async_trait]
 pub trait Storage {
     fn new(resource: &String) -> Self where Self: Sized;
+    async fn setup(&mut self);
     async fn write(&mut self, data: SaveTelegram);
 }
 
@@ -73,6 +74,8 @@ impl Storage for CSVFile {
             file_path: resource.clone(),
         }
     }
+
+    async fn setup(&mut self) {}
 
     async  fn write(&mut self, data: SaveTelegram) {
         let file: File;
@@ -107,7 +110,16 @@ impl Storage for InfluxDB {
             client: Client::new(resource, "dvbdump")
         };
 
+        //influx.prepare_influxdb().await;
         influx
+    }
+
+    async fn setup(&mut self) {
+       let create_db_stmt = "CREATE DATABASE dvbdump";
+       self.client
+           .query(&ReadQuery::new(create_db_stmt))
+           .await
+           .expect("failed to create database");
     }
 
     async fn write(&mut self, data: SaveTelegram) {
@@ -121,15 +133,4 @@ impl Storage for InfluxDB {
         }
     }
 }
-
-impl InfluxDB {
-    async fn prepare_influxdb(&self) {
-       let create_db_stmt = "CREATE DATABASE dvbdump";
-       self.client
-           .query(&ReadQuery::new(create_db_stmt))
-           .await
-           .expect("failed to create database");
-    }
-}
-
 
