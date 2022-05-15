@@ -4,7 +4,7 @@ use std::env;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::{InfluxDB, CSVFile};
+use super::{InfluxDB, Storage, CSVFile};
 use super::{Telegram, SaveTelegram, Station};
 
 use dvb_dump::receives_telegrams_client::{ReceivesTelegramsClient};
@@ -15,27 +15,32 @@ pub mod dvb_dump{
 }
 
 pub struct Processor {
-    database: InfluxDB,
-    //database: CSVFile,
+    database: Box<dyn Storage>,
     grpc_host: String,
     receiver: Receiver<(Telegram, String)>
 }
 
-
 impl Processor {
     pub fn new(receiver: Receiver<(Telegram, String)>) -> Processor {
+        let storage: Box<dyn Storage>;
+
         let default_influx_host = String::from("http://localhost:8086");
         let influx_host = env::var("INFLUX_HOST").unwrap_or(default_influx_host);
 
-        let default_file = String::from("/var/lib/data-accumulator/formatted.csv");
-        let csv_file = env::var("CSV_FILE").unwrap_or(default_file);
-
+        match env::var("CSV_FILE") {
+            Ok(file_path) => {
+                storage = Box::new(CSVFile::new(&file_path));
+            }
+            Err(_) => {
+                storage = Box::new(InfluxDB::new(&influx_host));
+            }
+        }
 
         let default_grpc_host = String::from("http://127.0.0.1:50051");
         let grpc_host = env::var("GRPC_HOST").unwrap_or(default_grpc_host);
 
         Processor {
-            database: InfluxDB::new(&influx_host),
+            database: storage,
             grpc_host: String::from(grpc_host),
             receiver: receiver
         }

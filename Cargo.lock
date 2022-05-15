@@ -600,6 +600,7 @@ dependencies = [
  "actix-multipart",
  "actix-rt",
  "actix-web",
+ "async-trait",
  "chrono",
  "clap",
  "csv",

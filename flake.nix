@@ -24,17 +24,27 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
 
-          package = pkgs.callPackage ./derivation.nix {
+          package-influx = pkgs.callPackage ./derivation.nix {
             naersk = naersk.lib.${system};
             stops = stops;
+            storage = "InfluxDB";
           };
+
+          package-csv = pkgs.callPackage ./derivation.nix {
+            naersk = naersk.lib.${system};
+            stops = stops;
+            storage = "CSVFile";
+          };
+
         in
         rec {
           checks = packages;
-          packages.data-accumulator = package;
-          defaultPackage = package;
+          packages.data-accumulator = package-influx;
+          packages.data-accumulator-csv = package-csv;
+          defaultPackage = package-influx;
           overlay = (final: prev: {
-            data-accumulator = package;
+            data-accumulator = package-influx;
+            data-accumulator-csv = package-csv;
           });
         }
       ) // {

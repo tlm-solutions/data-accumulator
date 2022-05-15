@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use influxdb::{Client, ReadQuery};
 use influxdb::InfluxDbWriteable;
 use chrono::{DateTime, Utc};
+use async_trait::async_trait;
 
 #[derive(Deserialize, Serialize, Debug, InfluxDbWriteable)]
 pub struct SaveTelegram {
@@ -49,30 +50,31 @@ impl SaveTelegram {
     }
 }
 
+#[async_trait]
 pub trait Storage {
-    fn new(resource: &String) -> Self;
-    fn write(&mut self, data: SaveTelegram);
+    fn new(resource: &String) -> Self where Self: Sized;
+    async fn write(&mut self, data: SaveTelegram);
 }
 
 pub struct InfluxDB {
     pub uri: String,
     client: Client
-    //source: Receiver<SaveTelegram>,
-    //sink: Sender<SaveTelegram>,
 }
 
 pub struct CSVFile {
     pub file_path: String,
 }
 
-impl CSVFile {
-    pub fn new(resource: &String) -> CSVFile {
+#[async_trait]
+impl Storage for CSVFile {
+    fn new(resource: &String) -> CSVFile {
+        println!("CSV File writes to {}", resource);
         CSVFile {
             file_path: resource.clone(),
         }
     }
 
-    pub async  fn write(&mut self, data: SaveTelegram) {
+    async  fn write(&mut self, data: SaveTelegram) {
         let file: File;
         let mut file_existed: bool = true;
         if std::path::Path::new(&self.file_path).exists() {
@@ -95,8 +97,9 @@ impl CSVFile {
     }
 }
 
-impl InfluxDB {
-    pub fn new(resource: &String) -> InfluxDB {
+#[async_trait]
+impl Storage for InfluxDB {
+    fn new(resource: &String) -> InfluxDB {
         println!("Influx Connects to {}", &resource);
 
         let influx = InfluxDB {
@@ -107,15 +110,7 @@ impl InfluxDB {
         influx
     }
 
-    pub async fn prepare_influxdb(&self) {
-        let create_db_stmt = "CREATE DATABASE dvbdump";
-        self.client
-            .query(&ReadQuery::new(create_db_stmt))
-            .await
-            .expect("failed to create database");
-    }
-
-    pub async fn write(&mut self, data: SaveTelegram) {
+    async fn write(&mut self, data: SaveTelegram) {
         let write_result = self.client.query(data.into_query("telegram_r_09")).await;
         match write_result {
             Ok(_) => { }
@@ -126,4 +121,15 @@ impl InfluxDB {
         }
     }
 }
+
+impl InfluxDB {
+    async fn prepare_influxdb(&self) {
+       let create_db_stmt = "CREATE DATABASE dvbdump";
+       self.client
+           .query(&ReadQuery::new(create_db_stmt))
+           .await
+           .expect("failed to create database");
+    }
+}
+
 

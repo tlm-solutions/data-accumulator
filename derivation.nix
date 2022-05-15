@@ -1,4 +1,4 @@
-{ naersk, src, lib, pkg-config, cmake, protobuf, stops , zlib}:
+{ naersk, src, lib, pkg-config, cmake, protobuf, stops , zlib, storage}:
 
 naersk.buildPackage {
   pname = "data-accumulator";
@@ -9,8 +9,9 @@ naersk.buildPackage {
   cargoSha256 = lib.fakeSha256;
 
   patchPhase = ''
-    ls -al
     cp ${stops}/stops.json ./stops.json
+    substituteInPlace src/processor/mod.rs \
+         --replace "InfluxDB" "${storage}"
   '';
 
   nativeBuildInputs = [ pkg-config cmake protobuf zlib ];
