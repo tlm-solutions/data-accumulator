@@ -29,9 +29,11 @@ impl Processor {
 
         match env::var("CSV_FILE") {
             Ok(file_path) => {
+                println!("Using the CSV File: {}", &file_path);
                 storage = Box::new(CSVFile::new(&file_path));
             }
             Err(_) => {
+                println!("Using the InfluxDB {}", &influx_host);
                 storage = Box::new(InfluxDB::new(&influx_host));
             }
         }
@@ -109,8 +111,7 @@ impl Processor {
                         }
                     };
                 }
-                None => {
-                }
+                _ => {}
             };
         }
     }
