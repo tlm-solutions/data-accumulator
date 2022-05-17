@@ -55,7 +55,7 @@ impl Hash for Telegram {
 
 /*impl From<Telegram> for ReducedTelegram {
     fn from(tele: &Telegram) -> Self {
-        let delay = (tele.sign_of_deviation * 2 - 1) * tele.value_of_deviation;
+        let delay = (tele.sign_of_deviation * -2 + 1) * tele.value_of_deviation;
         ReducedTelegram {
             time_stamp: tele.time_stamp,
             position_id: tele.reporting_point,

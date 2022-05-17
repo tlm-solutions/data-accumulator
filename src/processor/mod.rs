@@ -96,7 +96,7 @@ impl Processor {
                         direction: telegram.request_for_priority,
                         status: telegram.request_status,
                         line: telegram.line.parse::<u32>().unwrap_or(0),
-                        delay: ((telegram.sign_of_deviation as i32) * 2 - 1) * telegram.value_of_deviation as i32,
+                        delay: ((telegram.sign_of_deviation as i32) * -2 + 1) * telegram.value_of_deviation as i32,
                         destination_number: telegram.destination_number.parse::<u32>().unwrap_or(0),
                         run_number: telegram.run_number.parse::<u32>().unwrap_or(0),
                         train_length: telegram.train_length,

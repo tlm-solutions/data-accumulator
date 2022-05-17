@@ -37,7 +37,7 @@ impl SaveTelegram {
             line: telegram.line.clone(),
             destination_number: telegram.destination_number.clone(),
             priority: telegram.priority,
-            delay: ((telegram.sign_of_deviation as i32) * 2 - 1i32) * telegram.value_of_deviation as i32,
+            delay: ((telegram.sign_of_deviation as i32) * -2 + 1i32) * telegram.value_of_deviation as i32,
             reporting_point: telegram.reporting_point,
             direction_request: telegram.request_for_priority,
             run_number: telegram.run_number.clone(),
