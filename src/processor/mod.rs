@@ -65,7 +65,7 @@ impl Processor {
                     station_id: 0,
                     region_id: 0  
                 }),
-                (String::from("10.13.37.101"), Station {
+                (String::from("127.0.0.1"), Station {
                     name: String::from("Zentralwerk"),
                     lat: 51.0810632,
                     lon: 13.7280758,
@@ -81,7 +81,7 @@ impl Processor {
                 }),
             ]);
 
-
+            println!("IP: {}", &ip);
             match stations.get(&ip) {
                 Some(station) => {
                     let start = SystemTime::now();

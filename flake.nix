@@ -4,12 +4,10 @@
 
     naersk = {
       url = github:nix-community/naersk;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     utils = {
       url = github:numtide/flake-utils;
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     stops = {
@@ -33,11 +31,9 @@
         rec {
           checks = packages;
           packages.data-accumulator = package;
-          packages.data-accumulator-csv = package;
           defaultPackage = package;
           overlay = (final: prev: {
             data-accumulator = package;
-            data-accumulator-csv = package;
           });
         }
       ) // {
