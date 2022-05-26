@@ -60,12 +60,12 @@ impl Processor {
             let stations = HashMap::from([
                 (String::from("10.13.37.100"), Station {
                     name: String::from("Barkhausen/Turmlabor"),
-                    lat: 51.026107,
-                    lon: 13.623566,
+                    lat: 51.027105,
+                    lon: 13.723606,
                     station_id: 0,
                     region_id: 0  
                 }),
-                (String::from("127.0.0.1"), Station {
+                (String::from("10.13.37.101"), Station {
                     name: String::from("Zentralwerk"),
                     lat: 51.0810632,
                     lon: 13.7280758,
@@ -74,8 +74,8 @@ impl Processor {
                 }),
                 (String::from("10.13.37.102"), Station {
                     name: String::from(""),
-                    lat: 51.0810632,
-                    lon: 13.7280758,
+                    lat: 50.822755,
+                    lon: 12.933914,
                     station_id: 2,
                     region_id: 1 
                 }),
