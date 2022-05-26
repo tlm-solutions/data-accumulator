@@ -52,6 +52,9 @@ impl Processor {
         self.database.setup().await;
         loop {
             let (telegram, ip) = self.receiver.recv().unwrap();
+
+            println!("{:#?} {:#?}", ip, telegram);
+
             let save = SaveTelegram::from(&telegram, &ip);
             self.database.write(save).await;
 
