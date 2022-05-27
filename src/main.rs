@@ -50,6 +50,7 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
         }
 
         let unlocked = sender.lock().unwrap();
+        println!("Received Telegram! {} {:?}", &ip_address, &telegram);
         unlocked.send(((*telegram).clone(), ip_address)).unwrap();
     }
 
