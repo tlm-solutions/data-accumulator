@@ -8,7 +8,7 @@ mod storage;
 
 use structs::{Response, Args};
 pub use filter::{Filter, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
-use processor::{Processor};
+use processor::{ProcessorGrpc, ProcessorDatabase};
 pub use stations::{Station};
 pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
 
@@ -20,7 +20,8 @@ use std::sync::mpsc;
 use std::thread;
 
 async fn formatted(filter: web::Data<RwLock<Filter>>,
-                   sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
+                   database_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
+                   grpc_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
                    telegram: web::Json<Telegram>, 
                    req: HttpRequest) -> impl Responder {
 
@@ -49,9 +50,21 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
             return web::Json(Response { success: false });
         }
 
-        let unlocked = sender.lock().unwrap();
         println!("Received Telegram! {} {:?}", &ip_address, &telegram);
-        unlocked.send(((*telegram).clone(), ip_address)).unwrap();
+        match grpc_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
+            Err(_) => {
+                println!("Channel GRPC has problems !");
+            }
+            _ => {}
+        }
+        match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
+            Err(_) => {
+                println!("Channel Database has problems !");
+            },
+            _ => {
+
+            }
+        }
     }
 
     web::Json(Response { success: true })
@@ -78,19 +91,30 @@ async fn main() -> std::io::Result<()> {
 
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
-    let (sender, receiver) = mpsc::sync_channel::<(Telegram, String)>(200);
+    let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(200);
+    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(Telegram, String)>(200);
+
 
     thread::spawn(move || {
-        let mut processor = Processor::new(receiver);
         let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(processor.processing_loop());
+        let mut processor_database = ProcessorDatabase::new(receiver_database);
+        rt.block_on(processor_database.process_database());
     });
 
-    let web_sender = web::Data::new(Mutex::new(sender));
+    thread::spawn(move || {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let mut processor_grpc = ProcessorGrpc::new(receiver_grpc);
+        rt.block_on(processor_grpc.process_grpc());
+    });
+
+    let web_database_sender = web::Data::new(Mutex::new(sender_database));
+    let web_grpc_sender = web::Data::new(Mutex::new(sender_grpc));
+
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || App::new()
                     .app_data(filter.clone())
-                    .app_data(web_sender.clone())
+                    .app_data(web_database_sender.clone())
+                    .app_data(web_grpc_sender.clone())
                     .route("/formatted_telegram", web::post().to(formatted))
                     .route("/raw_telegram", web::post().to(raw))
 
