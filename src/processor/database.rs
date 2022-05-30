@@ -36,6 +36,8 @@ impl ProcessorDatabase {
     }
 
     pub async fn process_database(&mut self) {
+        self.database.setup().await;
+
         loop {
             let (telegram, ip) = self.receiver_database.recv().unwrap();
 
