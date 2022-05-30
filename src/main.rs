@@ -52,14 +52,14 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
 
         println!("Received Telegram! {} {:?}", &ip_address, &telegram);
         match grpc_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
-            Err(_) => {
-                println!("Channel GRPC has problems !");
+            Err(err) => {
+                println!("Channel GRPC has problems ! {:?}", err);
             }
             _ => {}
         }
         match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
-            Err(_) => {
-                println!("Channel Database has problems !");
+            Err(err) => {
+                println!("Channel Database has problems ! {:?}", err);
             },
             _ => {
 
