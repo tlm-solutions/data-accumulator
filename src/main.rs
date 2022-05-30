@@ -96,13 +96,13 @@ async fn main() -> std::io::Result<()> {
 
 
     thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Builder::new_current_thread().enable_io().enable_time().build().unwrap();
         let mut processor_database = ProcessorDatabase::new(receiver_database);
         rt.block_on(processor_database.process_database());
     });
 
     thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Builder::new_current_thread().enable_io().enable_time().build().unwrap();
         let mut processor_grpc = ProcessorGrpc::new(receiver_grpc);
         rt.block_on(processor_grpc.process_grpc());
     });
