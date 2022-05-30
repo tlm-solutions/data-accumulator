@@ -1,5 +1,7 @@
 use std::sync::mpsc::{Receiver};
 use std::env;
+use std::io::stdout;
+use std::io::Write;
 
 use super::{InfluxDB, Storage, CSVFile};
 use super::{Telegram, SaveTelegram};
@@ -37,7 +39,9 @@ impl ProcessorDatabase {
         loop {
             let (telegram, ip) = self.receiver_database.recv().unwrap();
 
-            println!("{:#?} {:#?}", ip, telegram);
+            println!("[ProcessorDatabase] Received Telegram! {} {:?}", ip, telegram);
+            stdout().flush();
+
             let save = SaveTelegram::from(&telegram, &ip);
             self.database.write(save).await;
         }

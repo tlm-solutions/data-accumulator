@@ -18,6 +18,8 @@ use clap::Parser;
 use std::sync::mpsc::{SyncSender};
 use std::sync::mpsc;
 use std::thread;
+use std::io::stdout;
+use std::io::Write;
 
 async fn formatted(filter: web::Data<RwLock<Filter>>,
                    database_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
@@ -50,16 +52,19 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
             return web::Json(Response { success: false });
         }
 
-        println!("Received Telegram! {} {:?}", &ip_address, &telegram);
+        println!("[main] Received Telegram! {} {:?}", &ip_address, &telegram);
+        stdout().flush();
         match grpc_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
-                println!("Channel GRPC has problems ! {:?}", err);
+                println!("[main] Channel GRPC has problems! {:?}", err);
+                stdout().flush();
             }
             _ => {}
         }
         match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
-                println!("Channel Database has problems ! {:?}", err);
+                println!("[main] Channel Database has problems! {:?}", err);
+                stdout().flush();
             },
             _ => {
 
@@ -75,6 +80,7 @@ async fn raw(telegram: web::Json<RawData>) -> impl Responder {
     //let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
 
     println!("Received Formatted Record: {:?}", &telegram);
+    stdout().flush();
     //Processor::dump_to_file(&csv_file, &telegram).await;
 
     web::Json(Response { success: true })

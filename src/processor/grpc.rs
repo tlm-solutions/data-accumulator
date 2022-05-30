@@ -3,6 +3,8 @@ use std::sync::mpsc::{Receiver};
 use std::env;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::io::stdout;
+use std::io::Write;
 
 use super::{Telegram, Station};
 
@@ -32,6 +34,10 @@ impl ProcessorGrpc {
     pub async fn process_grpc(&mut self) {
         loop {
             let (telegram, ip) = self.receiver_grpc.recv().unwrap();
+
+            println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
+            stdout().flush();
+
             // dont cry code reader this will TM be replaced by postgress look up 
             // revol-xut May the 8 2022
             let stations = HashMap::from([
@@ -84,7 +90,8 @@ impl ProcessorGrpc {
                             client.receive_new(request).await.is_ok();
                         }
                         Err(_) => {
-                            println!("Cannot connect to GRPC Host");
+                            println!("[ProcessorGrpc] Cannot connect to GRPC Host");
+                            stdout().flush();
                         }
                     };
                 }
