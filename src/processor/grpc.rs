@@ -35,6 +35,7 @@ impl ProcessorGrpc {
         loop {
             let (telegram, ip) = self.receiver_grpc.recv().unwrap();
 
+            println!("[ProcessorDatabase] queue size: {}", self.receiver_grpc.try_iter().count());
             println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
             stdout().flush();
 

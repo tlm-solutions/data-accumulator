@@ -14,12 +14,14 @@ pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
 
 use actix_web::{web, App, HttpServer, Responder, HttpRequest};
 use std::sync::{RwLock, Mutex};
+use std::sync::mpsc::TryIter;
 use clap::Parser;
 use std::sync::mpsc::{SyncSender};
 use std::sync::mpsc;
 use std::thread;
 use std::io::stdout;
 use std::io::Write;
+use std::ops::Deref;
 
 async fn formatted(filter: web::Data<RwLock<Filter>>,
                    database_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
@@ -60,7 +62,6 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                 stdout().flush();
             }
             _ => {
-                println!("[ProcessorDatabase] queue size: {}", self.receiver_grpc.iter().count());
             }
         }
         match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
@@ -69,7 +70,6 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                 stdout().flush();
             },
             _ => {
-                println!("[ProcessorDatabase] queue size: {}", self.receiver_database.iter().count());
             }
         }
     }
