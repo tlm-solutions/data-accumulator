@@ -60,20 +60,14 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                 println!("[main] Channel GRPC has problems! {:?}", err);
                 stdout().flush();
             }
-            _ => {
-                println!("[main] writing grpc!");
-                stdout().flush();
-            }
+            _ => { }
         }
         match sender.1.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
                 println!("[main] Channel Database has problems! {:?}", err);
                 stdout().flush();
             },
-            _ => {
-                println!("[main] writing database!");
-                stdout().flush();
-            }
+            _ => { }
         }
     }
 

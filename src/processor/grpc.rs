@@ -34,13 +34,10 @@ impl ProcessorGrpc {
     pub async fn process_grpc(&mut self) {
         loop {
 
-            println!("[ProcessorGrpc] pre: queue size: {}", self.receiver_grpc.try_iter().count());
-            stdout().flush();
             let (telegram, ip) = self.receiver_grpc.recv().unwrap();
-            println!("[ProcessorGrpc] post: queue size: {}", self.receiver_grpc.try_iter().count());
-            stdout().flush();
-            println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
-            stdout().flush();
+            //println!("[ProcessorGrpc] post: queue size: {}", self.receiver_grpc.try_iter().count());
+            //println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
+            //stdout().flush();
 
             // dont cry code reader this will TM be replaced by postgress look up 
             // revol-xut May the 8 2022
