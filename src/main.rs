@@ -59,7 +59,9 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                 println!("[main] Channel GRPC has problems! {:?}", err);
                 stdout().flush();
             }
-            _ => {}
+            _ => {
+                println!("[ProcessorDatabase] queue size: {}", self.receiver_grpc.iter().count());
+            }
         }
         match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
@@ -67,7 +69,7 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
                 stdout().flush();
             },
             _ => {
-
+                println!("[ProcessorDatabase] queue size: {}", self.receiver_database.iter().count());
             }
         }
     }

@@ -27,6 +27,9 @@ chrono = "0.4"
 
 async-trait = "*"
 
+diesel = { version = "1.4.4", features = ["postgres"] }
+dotenv = "0.15.0"
+
 [build-dependencies]
 tonic-build = "0.7"
 
