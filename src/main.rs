@@ -96,8 +96,8 @@ async fn main() -> std::io::Result<()> {
 
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
-    let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(10);
-    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(Telegram, String)>(10);
+    let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(200);
+    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(Telegram, String)>(200);
 
     thread::spawn(move || {
         let rt = tokio::runtime::Builder::new_current_thread().enable_io().enable_time().build().unwrap();

@@ -35,7 +35,7 @@ impl ProcessorGrpc {
         loop {
 
             let (telegram, ip) = self.receiver_grpc.recv().unwrap();
-            //println!("[ProcessorGrpc] post: queue size: {}", self.receiver_grpc.try_iter().count());
+            println!("[ProcessorGrpc] post: queue size: {}", self.receiver_grpc.try_iter().count());
             //println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
             //stdout().flush();
 
@@ -57,7 +57,7 @@ impl ProcessorGrpc {
                     region_id: 0,
                 }),
                 (String::from("10.13.37.102"), Station {
-                    name: String::from(""),
+                    name: String::from("Chemnitz"),
                     lat: 50.822755,
                     lon: 12.933914,
                     station_id: 2,
