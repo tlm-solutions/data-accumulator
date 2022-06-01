@@ -24,8 +24,7 @@ use std::io::Write;
 use std::ops::Deref;
 
 async fn formatted(filter: web::Data<RwLock<Filter>>,
-                   database_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
-                   grpc_sender: web::Data<Mutex<SyncSender<(Telegram, String)>>>,
+                   sender: web::Data<(Mutex<SyncSender<(Telegram, String)>>, Mutex<SyncSender<(Telegram, String)>>)>,
                    telegram: web::Json<Telegram>, 
                    req: HttpRequest) -> impl Responder {
 
@@ -56,20 +55,24 @@ async fn formatted(filter: web::Data<RwLock<Filter>>,
 
         println!("[main] Received Telegram! {} {:?}", &ip_address, &telegram);
         stdout().flush();
-        match grpc_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
+        match sender.0.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
                 println!("[main] Channel GRPC has problems! {:?}", err);
                 stdout().flush();
             }
             _ => {
+                println!("[main] writing grpc!");
+                stdout().flush();
             }
         }
-        match database_sender.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
+        match sender.1.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
             Err(err) => {
                 println!("[main] Channel Database has problems! {:?}", err);
                 stdout().flush();
             },
             _ => {
+                println!("[main] writing database!");
+                stdout().flush();
             }
         }
     }
@@ -114,14 +117,14 @@ async fn main() -> std::io::Result<()> {
         rt.block_on(processor_grpc.process_grpc());
     });
 
-    let web_database_sender = web::Data::new(Mutex::new(sender_database));
-    let web_grpc_sender = web::Data::new(Mutex::new(sender_grpc));
+    let web_database_sender = Mutex::new(sender_database);
+    let web_grpc_sender = Mutex::new(sender_grpc);
 
+    let request_data = web::Data::new((web_grpc_sender, web_database_sender));
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || App::new()
                     .app_data(filter.clone())
-                    .app_data(web_database_sender.clone())
-                    .app_data(web_grpc_sender.clone())
+                    .app_data(request_data.clone())
                     .route("/formatted_telegram", web::post().to(formatted))
                     .route("/raw_telegram", web::post().to(raw))
 

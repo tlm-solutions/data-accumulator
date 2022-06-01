@@ -41,8 +41,11 @@ impl ProcessorDatabase {
         loop {
 
             println!("[ProcessorDatabase] pre: queue size: {}", self.receiver_database.try_iter().count());
+
+            stdout().flush();
             let (telegram, ip) = self.receiver_database.recv().unwrap();
             println!("[ProcessorDatabase] post: queue size: {}", self.receiver_database.try_iter().count());
+            stdout().flush();
             println!("[ProcessorDatabase] Received Telegram! {} {:?}", ip, telegram);
             stdout().flush();
 
