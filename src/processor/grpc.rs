@@ -33,9 +33,10 @@ impl ProcessorGrpc {
 
     pub async fn process_grpc(&mut self) {
         loop {
-            let (telegram, ip) = self.receiver_grpc.recv().unwrap();
 
-            println!("[ProcessorDatabase] queue size: {}", self.receiver_grpc.try_iter().count());
+            println!("[ProcessorDatabase] pre: queue size: {}", self.receiver_grpc.try_iter().count());
+            let (telegram, ip) = self.receiver_grpc.recv().unwrap();
+            println!("[ProcessorDatabase] post: queue size: {}", self.receiver_grpc.try_iter().count());
             println!("[ProcessorGrpc] Received Telegram! {} {:?}", ip, telegram);
             stdout().flush();
 
