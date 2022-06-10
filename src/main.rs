@@ -35,10 +35,36 @@ use std::thread;
 use std::io::stdout;
 use std::io::Write;
 use std::ops::Deref;
+use std::env;
 
 
 pub struct ClickyBuntyDatabase {
     db: Database<PgConnection>,
+}
+
+impl ClickyBuntyDatabase {
+    fn new() -> ClickyBuntyDatabase {
+        let default_postgres_host = String::from("localhost:5433");
+        let default_postgres_port = String::from("5432");
+
+        let postgres_host = format!(
+            "posgresql://dvbdump:{}@{}:{}/dvbdump",
+            env::var("POSTGRES_PASSWORD").unwrap(),
+            env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
+            env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
+        );
+
+        let db = Database::builder()
+                .pool_max_size(10)
+                .pool_min_idle(Some(0))
+                .pool_max_lifetime(Some(Duration::from_secs(30 * 60)))
+                .open(postgres_host);
+
+
+        ClickyBuntyDatabase {
+            db: db
+        }
+    }
 }
 
 #[actix_web::main]
@@ -49,13 +75,7 @@ async fn main() -> std::io::Result<()> {
     let host = args.host.as_str();
     let port = args.port;
 
-    let db = Database::builder()
-        .pool_max_size(10)
-        .pool_min_idle(Some(0))
-        .pool_max_lifetime(Some(Duration::from_secs(30 * 60)))
-        .open("postgres:dvbdump:dvbdump@");
-
-    let database_struct = web::Data::new(ClickyBuntyDatabase { db: db });
+    let database_struct = web::Data::new(ClickyBuntyDatabase::new());
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
     let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(200);
