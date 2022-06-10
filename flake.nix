@@ -35,6 +35,15 @@
           overlay = (final: prev: {
             data-accumulator = package;
           });
+
+          devShells = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              pkg-config cmake zlib llvmPackages.bintools postrgesql
+            ];
+
+            shellHook = ''
+            '';
+          };
         }
       ) // {
       hydraJobs =

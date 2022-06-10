@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::stdout;
 use std::io::Write;
+use uuid::Uuid;
 
 use super::{Telegram, Station};
 
@@ -43,12 +44,15 @@ impl ProcessorGrpc {
             // revol-xut May the 8 2022
             let stations = HashMap::from([
                 (String::from("10.13.37.100"), Station {
+                    id: Uuid::new_v4(),
+                    token: Some(String::from("")),
                     name: String::from("Barkhausen/Turmlabor"),
                     lat: 51.027105,
                     lon: 13.723606,
-                    station_id: 0,
-                    region_id: 0  
-                }),
+                    region: 0,
+                    owner: Uuid::new_v4(),
+                    approved: true
+                }) /*,
                 (String::from("10.13.37.101"), Station {
                     name: String::from("Zentralwerk"),
                     lat: 51.0810632,
@@ -62,7 +66,7 @@ impl ProcessorGrpc {
                     lon: 12.933914,
                     station_id: 2,
                     region_id: 1 
-                }),
+                }),*/
             ]);
 
             match stations.get(&ip) {
@@ -83,7 +87,7 @@ impl ProcessorGrpc {
                         destination_number: telegram.destination_number.parse::<u32>().unwrap_or(0),
                         run_number: telegram.run_number.parse::<u32>().unwrap_or(0),
                         train_length: telegram.train_length,
-                        region_code: station.region_id
+                        region_code: station.region as u32
                     });
 
                     match ReceivesTelegramsClient::connect(self.grpc_host.clone()).await {

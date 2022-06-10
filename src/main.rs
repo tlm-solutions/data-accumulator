@@ -1,18 +1,31 @@
+
 extern crate clap;
+extern crate dotenv;
+#[macro_use] extern crate diesel;
 
 mod structs;
 mod filter;
 mod processor;
-mod stations;
+//mod stations;
 mod storage;
+mod database;
+mod routes;
+mod schema;
 
 use structs::{Response, Args};
 pub use filter::{Filter, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 use processor::{ProcessorGrpc, ProcessorDatabase};
-pub use stations::{Station};
+//pub use stations::{Station};
 pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
+pub use routes::{formatted, raw, Station};
 
-use actix_web::{web, App, HttpServer, Responder, HttpRequest};
+
+use actix_diesel::Database;
+use actix_web::{web, http::Method, middleware, App, HttpServer};
+//use actix_web_async_await::{compat, compat2};
+use diesel::pg::PgConnection;
+use failure::Error;
+use std::time::Duration;
 use std::sync::{RwLock, Mutex};
 use std::sync::mpsc::TryIter;
 use clap::Parser;
@@ -23,68 +36,10 @@ use std::io::stdout;
 use std::io::Write;
 use std::ops::Deref;
 
-async fn formatted(filter: web::Data<RwLock<Filter>>,
-                   sender: web::Data<(Mutex<SyncSender<(Telegram, String)>>, Mutex<SyncSender<(Telegram, String)>>)>,
-                   telegram: web::Json<Telegram>, 
-                   req: HttpRequest) -> impl Responder {
 
-    let telegram_hash = Filter::calculate_hash(&telegram).await;
-    let contained;
-    // checks if the given telegram is already in the buffer
-     {
-        let readable_filter = filter.read().unwrap();
-        contained = readable_filter.last_elements.contains(&telegram_hash);
-    }
-
-    // updates the buffer adding the new telegram
-    {
-        let mut writeable_filter = filter.write().unwrap();
-        let index = writeable_filter.iterator;
-        writeable_filter.last_elements[index] = telegram_hash;
-        writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
-    }
-
-    // do more processing
-    if !contained {
-        let ip_address;
-        if let Some(val) = req.peer_addr() {
-            ip_address = val.ip().to_string();
-        } else {
-            return web::Json(Response { success: false });
-        }
-
-        println!("[main] Received Telegram! {} {:?}", &ip_address, &telegram);
-        stdout().flush();
-        match sender.0.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
-            Err(err) => {
-                println!("[main] Channel GRPC has problems! {:?}", err);
-                stdout().flush();
-            }
-            _ => { }
-        }
-        match sender.1.lock().unwrap().try_send(((*telegram).clone(), ip_address.clone())) {
-            Err(err) => {
-                println!("[main] Channel Database has problems! {:?}", err);
-                stdout().flush();
-            },
-            _ => { }
-        }
-    }
-
-    web::Json(Response { success: true })
+pub struct ClickyBuntyDatabase {
+    db: Database<PgConnection>,
 }
-
-async fn raw(telegram: web::Json<RawData>) -> impl Responder {
-    //let default_file = String::from("/var/lib/data-accumulator/raw_data.csv");
-    //let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
-
-    println!("Received Formatted Record: {:?}", &telegram);
-    stdout().flush();
-    //Processor::dump_to_file(&csv_file, &telegram).await;
-
-    web::Json(Response { success: true })
-}
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -94,6 +49,13 @@ async fn main() -> std::io::Result<()> {
     let host = args.host.as_str();
     let port = args.port;
 
+    let db = Database::builder()
+        .pool_max_size(10)
+        .pool_min_idle(Some(0))
+        .pool_max_lifetime(Some(Duration::from_secs(30 * 60)))
+        .open("postgres:dvbdump:dvbdump@");
+
+    let database_struct = web::Data::new(ClickyBuntyDatabase { db: db });
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
     let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(200);
@@ -119,9 +81,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || App::new()
                     .app_data(filter.clone())
                     .app_data(request_data.clone())
-                    .route("/formatted_telegram", web::post().to(formatted))
-                    .route("/raw_telegram", web::post().to(raw))
-
+                    .app_data(database_struct.clone())
+                    .route("/telegram/r09/", web::post().to(formatted))
+                    .route("/telegram/raw/", web::post().to(raw))
                     )
         .bind((host, port))?
         .run()
