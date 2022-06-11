@@ -1,28 +1,16 @@
 use super::{Filter, Telegram, DEPULICATION_BUFFER_SIZE, Response, RawData};
-use serde::{Serialize};
 use crate::{schema::stations, ClickyBuntyDatabase};
-use actix_diesel::{dsl::AsyncRunQueryDsl, AsyncError};
+use actix_diesel::{dsl::AsyncRunQueryDsl};
 use actix_web::{
-    error::{ErrorInternalServerError, ErrorNotFound},
-    HttpResponse, web::Json, web::Path, Responder, Result,
+    Responder,
 };
 use crate::diesel::QueryDsl;
-use actix_web::{web, App, HttpServer, HttpRequest};
+use actix_web::{web, HttpRequest};
 use std::sync::{RwLock, Mutex};
-use std::sync::mpsc::TryIter;
-use clap::Parser;
-use std::sync::mpsc::{SyncSender};
-use std::sync::mpsc;
-use std::thread;
+use std::sync::mpsc::SyncSender;
 use std::io::stdout;
 use std::io::Write;
-use std::ops::Deref;
-//use diesel::types::Uuid;
-//use diesel::sql_types::*;
 use uuid::{Uuid};
-//use diesel::pg::types::sql_types::Uuid;
-//use diesel::sql_types::Uuid;
-use diesel::prelude::*;
 use crate::diesel::ExpressionMethods;
 
 #[derive(Queryable)]
@@ -37,31 +25,23 @@ pub struct Station {
     pub approved: bool
 }
 
-fn print_type_of<T>(_: &T) {
-    println!("{}", std::any::type_name::<T>())
-}
-
 // /telegrams/r09/
 pub async fn formatted(filter: web::Data<RwLock<Filter>>,
                     sender: web::Data<(Mutex<SyncSender<(Telegram, String)>>, Mutex<SyncSender<(Telegram, String)>>)>,
                     database: web::Data<ClickyBuntyDatabase>,
                     telegram: web::Json<Telegram>, 
-                    req: HttpRequest) -> impl Responder {
-    let token = String::from("");
-    let station_id = Uuid::new_v4();
-
-    let database_query = stations::table
-        .filter(stations::id.eq(station_id))
-        .get_result_async::<Station>(&database.db);
-
-    print_type_of(&database_query);
-
+                    _req: HttpRequest) -> impl Responder {
+    
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
     {
         let readable_filter = filter.read().unwrap();
         contained = readable_filter.last_elements.contains(&telegram_hash);
+    }
+
+    if contained {
+        return web::Json(Response { success: false })
     }
 
     // updates the buffer adding the new telegram
@@ -72,25 +52,34 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
-    // do more processing
-    if !contained {
+    // query database for this station
+    let station;
+    match (stations::table
+        .filter(stations::id.eq(telegram.station_id))
+        .get_result_async::<Station>(&database.db)).await {
+        Ok(data) => { station = data; }
+        Err(e) => {
+            return web::Json(Response { success: false })
+        }
+    };
 
-        println!("[main] Received Telegram! {} {:?}", &station_id, &telegram);
-        stdout().flush();
-        match sender.0.lock().unwrap().try_send(((*telegram).clone(), station_id.to_string().clone())) {
-            Err(err) => {
-                println!("[main] Channel GRPC has problems! {:?}", err);
-                stdout().flush();
-            }
-            _ => { }
+    if station.id != telegram.station_id || station.token != Some(telegram.token.clone()) {
+        // authentication for telegram failed !
+        return web::Json(Response { success: false })
+    }
+
+    println!("[main] Received Telegram! {} {:?}", &telegram.station_id, &telegram);
+    match sender.0.lock().unwrap().try_send(((*telegram).clone(), telegram.station_id.to_string().clone())) {
+        Err(err) => {
+            println!("[main] Channel GRPC has problems! {:?}", err);
         }
-        match sender.1.lock().unwrap().try_send(((*telegram).clone(), station_id.to_string().clone())) {
-            Err(err) => {
-                println!("[main] Channel Database has problems! {:?}", err);
-                stdout().flush();
-            },
-            _ => { }
-        }
+        _ => { }
+    }
+    match sender.1.lock().unwrap().try_send(((*telegram).clone(), telegram.station_id.to_string().clone())) {
+        Err(err) => {
+            println!("[main] Channel Database has problems! {:?}", err);
+        },
+        _ => { }
     }
 
     web::Json(Response { success: true })

@@ -1,7 +1,5 @@
 use std::sync::mpsc::{Receiver};
 use std::env;
-use std::io::stdout;
-use std::io::Write;
 
 use super::{InfluxDB, Storage, CSVFile};
 use super::{Telegram, SaveTelegram};

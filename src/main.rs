@@ -15,25 +15,19 @@ mod schema;
 use structs::{Response, Args};
 pub use filter::{Filter, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 use processor::{ProcessorGrpc, ProcessorDatabase};
-//pub use stations::{Station};
 pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
 pub use routes::{formatted, raw, Station};
 
 
 use actix_diesel::Database;
-use actix_web::{web, http::Method, middleware, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 //use actix_web_async_await::{compat, compat2};
 use diesel::pg::PgConnection;
 use std::time::Duration;
 use std::sync::{RwLock, Mutex};
-use std::sync::mpsc::TryIter;
 use clap::Parser;
-use std::sync::mpsc::{SyncSender};
 use std::sync::mpsc;
 use std::thread;
-use std::io::stdout;
-use std::io::Write;
-use std::ops::Deref;
 use std::env;
 use tokio;
 
@@ -103,7 +97,7 @@ async fn main() -> std::io::Result<()> {
                     .app_data(filter.clone())
                     .app_data(request_data.clone())
                     .app_data(database_struct.clone())
-                    .route("/formatted_telegram", web::post().to(formatted))
+                    .route("/telegram/r09/", web::post().to(formatted))
                     .route("/telegram/raw/", web::post().to(raw))
                     )
         .bind((host, port))?

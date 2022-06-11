@@ -1,10 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 use std::hash::Hasher;
+use uuid::Uuid;
 
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Telegram {
+    pub station_id: Uuid,
+    pub token: String,
     pub line: String,
     pub destination_number: String,
     pub priority: u32,
