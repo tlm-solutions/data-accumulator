@@ -54,6 +54,7 @@ impl ClickyBuntyDatabase {
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );
 
+        println!("Connecting to postgres database {}", &postgres_host);
         let db = Database::builder()
                 .pool_max_size(10)
                 .pool_min_idle(Some(0))
@@ -102,7 +103,7 @@ async fn main() -> std::io::Result<()> {
                     .app_data(filter.clone())
                     .app_data(request_data.clone())
                     .app_data(database_struct.clone())
-                    .route("/formatted", web::post().to(formatted))
+                    .route("/formatted_telegram", web::post().to(formatted))
                     .route("/telegram/raw/", web::post().to(raw))
                     )
         .bind((host, port))?
