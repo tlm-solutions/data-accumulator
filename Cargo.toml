@@ -9,7 +9,7 @@ edition = "2021"
 derive_builder = "*"
 clap = { version = "3.1.8", features = ["derive"] }
 
-actix-rt = "*"
+actix-rt = "2.0.2"
 actix-multipart = "0.4.0"
 
 serde_json = "1.0"
@@ -32,6 +32,7 @@ dotenv = "0.15.0"
 uuid = { version = "=0.8.1", features = ["serde", "v4"] }
 diesel = { version = "=1.4.4", features = ["postgres", "r2d2", "uuidv07", "chrono"] }
 #diesel = { version = "1.4", features = ["postgres", "chrono", "r2d2", "uuid", "uuidv07" ]}
+actix = "0.11"
 actix-web = "4.0"
 actix-diesel = { version = "*", features = [ "actix-web" ] }
 pretty_env_logger = "0.3.0"
