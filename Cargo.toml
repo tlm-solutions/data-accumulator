@@ -12,7 +12,7 @@ clap = { version = "3.1.8", features = ["derive"] }
 actix-rt = "2.7"
 actix = "0.13"
 actix-web = "4.0"
-actix-diesel = { git = "https://github.com/frol/actix-diesel.git", features = ["actix-web"] }
+actix-diesel = { git = "https://github.com/frol/actix-diesel", branch = "actix-0.13", features = ["actix-web"] }
 #actix-diesel = { version = "*", features = [ "actix-web" ] }
 
 diesel = { version = "1", features = ["postgres", "r2d2", "uuidv07", "chrono"] }

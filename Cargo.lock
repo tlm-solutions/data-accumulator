@@ -46,7 +46,7 @@ dependencies = [
 [[package]]
 name = "actix-diesel"
 version = "0.3.1-alpha.0"
-source = "git+https://github.com/frol/actix-diesel.git#3a001986c89dfabfc3c448d8bae28525101b4992"
+source = "git+https://github.com/frol/actix-diesel?branch=actix-0.13#3a001986c89dfabfc3c448d8bae28525101b4992"
 dependencies = [
  "actix",
  "actix-web",
