@@ -24,7 +24,6 @@ use actix_diesel::Database;
 use actix_web::{web, http::Method, middleware, App, HttpServer};
 //use actix_web_async_await::{compat, compat2};
 use diesel::pg::PgConnection;
-use failure::Error;
 use std::time::Duration;
 use std::sync::{RwLock, Mutex};
 use std::sync::mpsc::TryIter;
@@ -36,6 +35,7 @@ use std::io::stdout;
 use std::io::Write;
 use std::ops::Deref;
 use std::env;
+use tokio;
 
 
 pub struct ClickyBuntyDatabase {
