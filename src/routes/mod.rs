@@ -31,7 +31,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
                     database: web::Data<ClickyBuntyDatabase>,
                     telegram: web::Json<Telegram>, 
                     _req: HttpRequest) -> impl Responder {
-    
+
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
@@ -51,7 +51,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.last_elements[index] = telegram_hash;
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
-
+    println!("Received Telegram: {:?}", &telegram);
     // query database for this station
     let station;
     match (stations::table
@@ -62,6 +62,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
             return web::Json(Response { success: false })
         }
     };
+    println!("Station found: {:?}", &station);
 
     if station.id != telegram.station_id || station.token != Some(telegram.token.clone()) {
         // authentication for telegram failed !
