@@ -12,6 +12,7 @@ use std::io::stdout;
 use std::io::Write;
 use uuid::{Uuid};
 use crate::diesel::ExpressionMethods;
+use crate::diesel::RunQueryDsl;
 
 #[derive(Queryable, Debug)]
 pub struct Station {
@@ -52,7 +53,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
-    println!("debug: {:?}", users::table.load(&connection));
+    //println!("debug: {:?}", stations::table.load(&database.db));
 
     println!("Received Telegram: {:?}", &telegram);
     // query database for this station
