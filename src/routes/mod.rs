@@ -31,7 +31,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
                     database: web::Data<ClickyBuntyDatabase>,
                     telegram: web::Json<Telegram>, 
                     _req: HttpRequest) -> impl Responder {
-
+    println!("Received MEssage {:?}", &telegram);
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
