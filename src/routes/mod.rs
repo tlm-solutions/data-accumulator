@@ -13,7 +13,7 @@ use std::io::Write;
 use uuid::{Uuid};
 use crate::diesel::ExpressionMethods;
 
-#[derive(Queryable)]
+#[derive(Queryable, Debug)]
 pub struct Station {
     pub id: Uuid,
     pub token: Option<String>,
