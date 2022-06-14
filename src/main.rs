@@ -93,8 +93,8 @@ async fn main() -> std::io::Result<()> {
                     .app_data(filter.clone())
                     .app_data(request_data.clone())
                     .app_data(database_struct.clone())
-                    .route("/telegram/r09/", web::post().to(formatted))
-                    .route("/telegram/raw/", web::post().to(raw))
+                    .route("/telegram/r09", web::post().to(formatted))
+                    .route("/telegram/raw", web::post().to(raw))
                     )
         .bind((host, port))?
         .run()
