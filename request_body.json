@@ -1,9 +1,9 @@
 {
     "station_id": "61ef8e8b-f4d8-4d1d-8fa8-1a1d3d48888e",
-    "token": "yTgS5f90jbbGHRK0d19Hw4sEeT48l2Vr",
+    "token": "yTgS5f90jbbGHRK0d19Hw4sEeT48l2VR",
     "time_stamp": 0,
     "line": "014",
-    "destination_number": "09",
+    "destination_number": "08",
     "priority": 2,
     "sign_of_deviation": 1,
     "value_of_deviation": 2,

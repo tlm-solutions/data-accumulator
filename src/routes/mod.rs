@@ -51,7 +51,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.last_elements[index] = telegram_hash;
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
-
+    println!("Request: {:?}", &telegram);
     // query database for this station
     let station;
     match (stations::table
