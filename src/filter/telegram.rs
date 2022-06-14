@@ -8,6 +8,7 @@ use uuid::Uuid;
 pub struct Telegram {
     pub station_id: Uuid,
     pub token: String,
+    pub time_stamp: u64,
     pub line: String,
     pub destination_number: String,
     pub priority: u32,
