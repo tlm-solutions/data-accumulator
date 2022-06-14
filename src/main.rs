@@ -42,18 +42,14 @@ impl ClickyBuntyDatabase {
         let default_postgres_port = String::from("5432");
 
         let postgres_host = format!(
-            "posgresql://dvbdump:{}@{}:{}/dvbdump",
+            "DATABASE_URL=posgresql://dvbdump:{}@{}:{}/dvbdump",
             env::var("POSTGRES_PASSWORD").unwrap(),
             env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );
 
         println!("Connecting to postgres database {}", &postgres_host);
-        let db = Database::builder()
-                .pool_max_size(10)
-                .pool_min_idle(Some(0))
-                .pool_max_lifetime(Some(Duration::from_secs(30 * 60)))
-                .open(postgres_host);
+        let db = Database::builder().open(postgres_host);
 
 
         ClickyBuntyDatabase {

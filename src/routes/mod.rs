@@ -53,8 +53,6 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
-    //println!("debug: {:?}", stations::table.load(&database.db));
-
     println!("Received Telegram: {:?}", &telegram);
     // query database for this station
     let station;
