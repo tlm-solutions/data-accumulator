@@ -1,11 +1,13 @@
 [package]
 name = "data-accumulator"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+telegrams = { version = "0.1.4", git = "https://github.com/dump-dvb/telegrams" }
+
 derive_builder = "*"
 clap = { version = "3.1.8", features = ["derive"] }
 
@@ -13,9 +15,6 @@ actix-rt = "2.7"
 actix = "0.13"
 actix-web = "4.0"
 actix-diesel = { git = "https://github.com/frol/actix-diesel", branch = "actix-0.13", features = ["actix-web"] }
-#actix-diesel = { version = "*", features = [ "actix-web" ] }
-
-diesel = { version = "1", features = ["postgres", "r2d2", "uuidv07", "chrono"] }
 
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -24,14 +23,10 @@ csv = "1.1"
 tonic = "0.7"
 prost = "0.10"
 
-influxdb = { version = "0.5.2", features = ["derive"] }
+diesel = { version = "1", features = ["postgres", "r2d2", "uuidv07", "chrono"] }
 chrono = "0.4"
-
 async-trait = "*"
-
 dotenv = "0.15.0"
-
-#uuid = {version="1.1", features=["serde", "v4"]}
 uuid = { version = "=0.8.1", features = ["serde", "v4"] }
 futures = "0.1"
 

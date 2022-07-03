@@ -1,49 +1,48 @@
-use std::sync::mpsc::{Receiver};
+use super::{Storage, PostgresDB, CSVFile, Empty, DataPipelineReceiver};
 use std::env;
-
-use super::{InfluxDB, Storage, CSVFile};
-use super::{Telegram, SaveTelegram};
+use telegrams::{R09SaveTelegram, };
 
 pub struct ProcessorDatabase {
-    database: Box<dyn Storage>,
-    receiver_database: Receiver<(Telegram, String)>
+    backend: Box<dyn Storage>,
+    receiver: DataPipelineReceiver
 }
 
 impl ProcessorDatabase {
-    pub fn new(receiver_database: Receiver<(Telegram, String)>) -> ProcessorDatabase {
-        let storage: Box<dyn Storage>;
+    pub fn new(receiver: DataPipelineReceiver) -> ProcessorDatabase{
+        let backend = env::var("DATABASE_BACKEND").expect("You need to specify a DATABASE_BACKEND");
 
-        let default_influx_host = String::from("http://localhost:8086");
-        let influx_host = env::var("INFLUX_HOST").unwrap_or(default_influx_host);
-
-        match env::var("CSV_FILE") {
-            Ok(file_path) => {
-                println!("Using the CSV File: {}", &file_path);
-                storage = Box::new(CSVFile::new(&file_path));
+        if backend == "POSTGRES" {
+            ProcessorDatabase {
+                backend: Box::new(PostgresDB::new()),
+                receiver: receiver
             }
-            Err(_) => {
-                println!("Using the InfluxDB {}", &influx_host);
-                storage = Box::new(InfluxDB::new(&influx_host));
+        } else if backend == "CSVFILE" {
+            ProcessorDatabase {
+                backend: Box::new(CSVFile::new()),
+                receiver: receiver
             }
-        }
+        } else {
+            println!("[WARNING] NO Backend specified!");
 
-        ProcessorDatabase {
-            database: storage,
-            receiver_database: receiver_database,
-        }
+            ProcessorDatabase {
+                backend: Box::new(Empty::new()),
+                receiver: receiver
+            }
+        } 
     }
 
     pub async fn process_database(&mut self) {
-        self.database.setup().await;
-
         loop {
+            let (telegram, meta) = self.receiver.recv().unwrap();
+            println!(
+                "[ProcessorDatabase] post: queue size: {}",
+                self.receiver.try_iter().count()
+            );
+            let save_telegram = R09SaveTelegram::from(telegram, meta);
 
-            let (telegram, ip) = self.receiver_database.recv().unwrap();
-            //println!("[ProcessorDatabase] Received Telegram! {} {:?}", ip, telegram);
-            //stdout().flush();
-
-            let save = SaveTelegram::from(&telegram, &ip);
-            self.database.write(save).await;
+            self.backend.write(save_telegram).await;
         }
     }
+
 }
+

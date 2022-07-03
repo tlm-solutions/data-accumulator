@@ -1,62 +1,36 @@
-
+#[macro_use]
+extern crate diesel;
 extern crate clap;
 extern crate dotenv;
-#[macro_use] extern crate diesel;
 
-mod structs;
 mod filter;
 mod processor;
-//mod stations;
-mod storage;
-mod database;
+mod structs;
 mod routes;
 mod schema;
+mod storage;
+mod stations;
 
-use structs::{Response, Args};
-pub use filter::{Filter, Telegram, RawData, DEPULICATION_BUFFER_SIZE};
 use processor::{ProcessorGrpc, ProcessorDatabase};
-pub use storage::{SaveTelegram, Storage, InfluxDB, CSVFile};
-pub use routes::{formatted, raw, Station};
+pub use routes::{formatted, Station};
+pub use storage::{CSVFile, Storage, PostgresDB, Empty};
+use filter::Filter;
+use structs::Args;
+use stations::ClickyBuntyDatabase;
 
-
-use actix_diesel::Database;
 use actix_web::{web, App, HttpServer};
-//use actix_web_async_await::{compat, compat2};
-use diesel::pg::PgConnection;
-use std::time::Duration;
-use std::sync::{RwLock, Mutex};
 use clap::Parser;
+use tokio::runtime::Builder;
+
 use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, SyncSender};
+use std::sync::{Mutex, RwLock};
 use std::thread;
-use std::env;
-use tokio;
 
+use telegrams::{TelegramMetaInformation, R09Telegram};
 
-pub struct ClickyBuntyDatabase {
-    db: Database<PgConnection>,
-}
-
-impl ClickyBuntyDatabase {
-    fn new() -> ClickyBuntyDatabase {
-        let default_postgres_host = String::from("localhost:5433");
-        let default_postgres_port = String::from("5432");
-
-        let postgres_host = format!(
-            "postgres://dvbdump:{}@{}:{}/dvbdump",
-            env::var("POSTGRES_PASSWORD").unwrap(),
-            env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
-            env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
-        );
-
-        println!("Connecting to postgres database {}", &postgres_host);
-        let db = Database::builder().open(postgres_host);
-
-
-        ClickyBuntyDatabase {
-            db: db
-        }
-    }
-}
+pub type DataPipelineSender = SyncSender<(R09Telegram, TelegramMetaInformation)>;
+pub type DataPipelineReceiver = Receiver<(R09Telegram, TelegramMetaInformation)>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -69,17 +43,25 @@ async fn main() -> std::io::Result<()> {
     let database_struct = web::Data::new(ClickyBuntyDatabase::new());
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
-    let (sender_database, receiver_database) = mpsc::sync_channel::<(Telegram, String)>(200);
-    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(Telegram, String)>(200);
+    let (sender_database, receiver_database) = mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
+    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
 
     thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_current_thread().enable_io().enable_time().build().unwrap();
+        let rt = Builder::new_current_thread()
+            .enable_io()
+            .enable_time()
+            .build()
+            .unwrap();
         let mut processor_database = ProcessorDatabase::new(receiver_database);
         rt.block_on(processor_database.process_database());
     });
 
     thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_current_thread().enable_io().enable_time().build().unwrap();
+        let rt = Builder::new_current_thread()
+            .enable_io()
+            .enable_time()
+            .build()
+            .unwrap();
         let mut processor_grpc = ProcessorGrpc::new(receiver_grpc);
         rt.block_on(processor_grpc.process_grpc());
     });
@@ -89,16 +71,15 @@ async fn main() -> std::io::Result<()> {
 
     let request_data = web::Data::new((web_grpc_sender, web_database_sender));
     println!("Listening on: {}:{}", host, port);
-    HttpServer::new(move || App::new()
-                    .app_data(filter.clone())
-                    .app_data(request_data.clone())
-                    .app_data(database_struct.clone())
-                    .route("/telegram/r09", web::post().to(formatted))
-                    .route("/telegram/raw", web::post().to(raw))
-                    )
-        .bind((host, port))?
-        .run()
-        .await
+    HttpServer::new(move || {
+        App::new()
+            .app_data(filter.clone())
+            .app_data(request_data.clone())
+            .app_data(database_struct.clone())
+            .route("/telegram/r09", web::post().to(formatted))
+            //.route("/telegram/raw", web::post().to(raw))
+    })
+    .bind((host, port))?
+    .run()
+    .await
 }
-
-

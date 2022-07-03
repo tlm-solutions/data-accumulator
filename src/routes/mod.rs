@@ -1,20 +1,22 @@
-use super::{Filter, Telegram, DEPULICATION_BUFFER_SIZE, Response, RawData};
-use crate::{schema::stations, ClickyBuntyDatabase};
-use actix_diesel::{dsl::AsyncRunQueryDsl};
-use actix_web::{
-    Responder,
-};
-use crate::diesel::QueryDsl;
-use actix_web::{web, HttpRequest};
-use std::sync::{RwLock, Mutex};
-use std::sync::mpsc::SyncSender;
-use std::io::stdout;
-use std::io::Write;
-use uuid::{Uuid};
-use crate::diesel::ExpressionMethods;
-use crate::diesel::RunQueryDsl;
+use super::{DataPipelineSender};
+use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
 
-#[derive(Queryable, Debug)]
+use crate::diesel::ExpressionMethods;
+use crate::diesel::QueryDsl;
+use crate::{schema::stations, ClickyBuntyDatabase};
+
+use telegrams::{R09ReceiveTelegram, TelegramMetaInformation};
+
+use actix_diesel::dsl::AsyncRunQueryDsl;
+use actix_web::Responder;
+use actix_web::{web, HttpRequest};
+use uuid::Uuid;
+use serde::{Serialize, Deserialize};
+
+use std::time::SystemTime;
+use std::sync::{Mutex, RwLock};
+
+#[derive(Queryable, Debug, Clone)]
 pub struct Station {
     pub id: Uuid,
     pub token: Option<String>,
@@ -23,15 +25,25 @@ pub struct Station {
     pub lon: f64,
     pub region: i32,
     pub owner: Uuid,
-    pub approved: bool
+    pub approved: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Response {
+    success: bool
 }
 
 // /telegrams/r09/
-pub async fn formatted(filter: web::Data<RwLock<Filter>>,
-                    sender: web::Data<(Mutex<SyncSender<(Telegram, String)>>, Mutex<SyncSender<(Telegram, String)>>)>,
-                    database: web::Data<ClickyBuntyDatabase>,
-                    telegram: web::Json<Telegram>, 
-                    _req: HttpRequest) -> impl Responder {
+pub async fn formatted(
+    filter: web::Data<RwLock<Filter>>,
+    sender: web::Data<(
+        Mutex<DataPipelineSender>,
+        Mutex<DataPipelineSender>,
+    )>,
+    database: web::Data<ClickyBuntyDatabase>,
+    telegram: web::Json<R09ReceiveTelegram>,
+    _req: HttpRequest,
+) -> impl Responder {
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
@@ -41,7 +53,7 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
     }
 
     if contained {
-        return web::Json(Response { success: false })
+        return web::Json(Response { success: false });
     }
 
     // updates the buffer adding the new telegram
@@ -54,37 +66,65 @@ pub async fn formatted(filter: web::Data<RwLock<Filter>>,
     // query database for this station
     let station;
     match (stations::table
-        .filter(stations::id.eq(telegram.station_id))
-        .get_result_async::<Station>(&database.db)).await {
-        Ok(data) => { station = data; }
+        .filter(stations::id.eq(telegram.auth.station))
+        .get_result_async::<Station>(&database.db))
+    .await
+    {
+        Ok(data) => {
+            station = data;
+        }
         Err(e) => {
             println!("Err: {:?}", e);
-            return web::Json(Response { success: false })
+            return web::Json(Response { success: false });
         }
     };
 
-    if station.id != telegram.station_id || station.token != Some(telegram.token.clone()) || !station.approved {
+    if station.id != telegram.auth.station
+        || station.token != Some(telegram.auth.token.clone())
+        || !station.approved
+    {
         // authentication for telegram failed !
-        return web::Json(Response { success: false })
+        return web::Json(Response { success: false });
     }
 
-    println!("[main] Received Telegram! {} {:?}", &telegram.station_id, &telegram);
-    match sender.0.lock().unwrap().try_send(((*telegram).clone(), telegram.station_id.to_string().clone())) {
+    let meta = TelegramMetaInformation {
+        time: SystemTime::now(),
+        station: station.id,
+        region: station.region as u64,
+        telegram_type: telegram.auth.telegram_type
+    };
+
+    println!(
+        "[main] Received Telegram! {} {:?}",
+        &telegram.auth.station, &telegram
+    );
+    match sender
+        .0
+        .lock()
+        .unwrap()
+        .try_send(((*telegram).data.clone(), meta.clone()))
+    {
         Err(err) => {
             println!("[main] Channel GRPC has problems! {:?}", err);
         }
-        _ => { }
+        _ => {}
     }
-    match sender.1.lock().unwrap().try_send(((*telegram).clone(), telegram.station_id.to_string().clone())) {
+    match sender
+        .1
+        .lock()
+        .unwrap()
+        .try_send(((*telegram).data.clone(), meta))
+    {
         Err(err) => {
             println!("[main] Channel Database has problems! {:?}", err);
-        },
-        _ => { }
+        }
+        _ => {}
     }
 
     web::Json(Response { success: true })
 }
 
+/*
 pub async fn raw(telegram: web::Json<RawData>) -> impl Responder {
     //let default_file = String::from("/var/lib/data-accumulator/raw_data.csv");
     //let csv_file = env::var("PATH_RAW_DATA").unwrap_or(default_file);
@@ -95,5 +135,5 @@ pub async fn raw(telegram: web::Json<RawData>) -> impl Responder {
 
     web::Json(Response { success: true })
 }
-
+*/
 
