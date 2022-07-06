@@ -30,15 +30,14 @@
         in
         rec {
           checks = packages;
-          packages.data-accumulator = package;
-          defaultPackage = package;
-          overlay = (final: prev: {
+          packages = {
             data-accumulator = package;
-          });
+            default = package;
+          };
 
           devShells = pkgs.mkShell {
             buildInputs = with pkgs; [
-              pkg-config cmake zlib llvmPackages.bintools postrgesql
+              pkg-config cmake zlib llvmPackages.bintools postgresql
             ];
 
             shellHook = ''
@@ -46,6 +45,10 @@
           };
         }
       ) // {
+          overlay = final: prev: {
+            inherit (self.packages.${prev.system})
+            data-accumulator;
+          };
       hydraJobs =
         let
           hydraSystems = [
