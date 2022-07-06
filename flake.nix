@@ -37,7 +37,11 @@
 
           devShells = pkgs.mkShell {
             buildInputs = with pkgs; [
-              pkg-config cmake zlib llvmPackages.bintools postgresql
+              pkg-config
+              cmake
+              zlib
+              llvmPackages.bintools
+              postgresql
             ];
 
             shellHook = ''
@@ -45,10 +49,10 @@
           };
         }
       ) // {
-          overlay = final: prev: {
-            inherit (self.packages.${prev.system})
-            data-accumulator;
-          };
+      overlay = final: prev: {
+        inherit (self.packages.${prev.system})
+          data-accumulator;
+      };
       hydraJobs =
         let
           hydraSystems = [

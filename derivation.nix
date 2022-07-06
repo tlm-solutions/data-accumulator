@@ -1,4 +1,4 @@
-{ naersk, src, lib, pkg-config, cmake, protobuf, postgresql, stops , zlib}:
+{ naersk, src, lib, pkg-config, cmake, protobuf, postgresql, stops, zlib }:
 
 naersk.buildPackage {
   pname = "data-accumulator";
