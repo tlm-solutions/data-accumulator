@@ -5,18 +5,18 @@ extern crate dotenv;
 
 mod filter;
 mod processor;
-mod structs;
 mod routes;
 mod schema;
-mod storage;
 mod stations;
+mod storage;
+mod structs;
 
-use processor::{ProcessorGrpc, ProcessorDatabase};
-pub use routes::{formatted, Station};
-pub use storage::{CSVFile, Storage, PostgresDB, Empty};
 use filter::Filter;
-use structs::Args;
+use processor::{ProcessorDatabase, ProcessorGrpc};
+pub use routes::{formatted, Station};
 use stations::ClickyBuntyDatabase;
+pub use storage::{CSVFile, Empty, PostgresDB, Storage};
+use structs::Args;
 
 use actix_web::{web, App, HttpServer};
 use clap::Parser;
@@ -27,7 +27,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 use std::sync::{Mutex, RwLock};
 use std::thread;
 
-use telegrams::{TelegramMetaInformation, R09Telegram};
+use telegrams::{R09Telegram, TelegramMetaInformation};
 
 pub type DataPipelineSender = SyncSender<(R09Telegram, TelegramMetaInformation)>;
 pub type DataPipelineReceiver = Receiver<(R09Telegram, TelegramMetaInformation)>;
@@ -43,8 +43,10 @@ async fn main() -> std::io::Result<()> {
     let database_struct = web::Data::new(ClickyBuntyDatabase::new());
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
-    let (sender_database, receiver_database) = mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
-    let (sender_grpc, receiver_grpc) = mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
+    let (sender_database, receiver_database) =
+        mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
+    let (sender_grpc, receiver_grpc) =
+        mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
 
     thread::spawn(move || {
         let rt = Builder::new_current_thread()
@@ -77,7 +79,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(request_data.clone())
             .app_data(database_struct.clone())
             .route("/telegram/r09", web::post().to(formatted))
-            //.route("/telegram/raw", web::post().to(raw))
+        //.route("/telegram/raw", web::post().to(raw))
     })
     .bind((host, port))?
     .run()

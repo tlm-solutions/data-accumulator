@@ -1,10 +1,10 @@
-use telegrams::{R09SaveTelegram, schema};
 use async_trait::async_trait;
 use csv::WriterBuilder;
-use std::fs::{File, OpenOptions};
-use diesel::prelude::*;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
 use std::env;
+use std::fs::{File, OpenOptions};
+use telegrams::{schema, R09SaveTelegram};
 
 #[async_trait]
 pub trait Storage {
@@ -20,10 +20,10 @@ pub struct CSVFile {
 }
 
 pub struct PostgresDB {
-    connection: PgConnection
+    connection: PgConnection,
 }
 
-pub struct Empty { }
+pub struct Empty {}
 
 #[async_trait]
 impl Storage for PostgresDB {
@@ -40,22 +40,21 @@ impl Storage for PostgresDB {
 
         PostgresDB {
             connection: PgConnection::establish(&postgres_host)
-            .expect(&format!("Error connecting to {}", postgres_host)),
+                .expect(&format!("Error connecting to {}", postgres_host)),
         }
     }
 
-    async fn setup(&mut self) {
-
-    }
+    async fn setup(&mut self) {}
 
     async fn write(&mut self, data: R09SaveTelegram) {
         match diesel::insert_into(schema::r09_telegrams::table)
             .values(&data)
-            .get_result::<R09SaveTelegram>(&self.connection) {
+            .get_result::<R09SaveTelegram>(&self.connection)
+        {
             Err(e) => {
                 println!("Postgres Error {:?}", e);
             }
-            _ => { }
+            _ => {}
         };
     }
 }
@@ -101,6 +100,5 @@ impl Storage for Empty {
         Empty {}
     }
     async fn setup(&mut self) {}
-    async fn write(&mut self, _data: R09SaveTelegram) { }
+    async fn write(&mut self, _data: R09SaveTelegram) {}
 }
-

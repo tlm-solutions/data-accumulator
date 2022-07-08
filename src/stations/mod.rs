@@ -24,5 +24,3 @@ impl ClickyBuntyDatabase {
         ClickyBuntyDatabase { db: db }
     }
 }
-
-

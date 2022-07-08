@@ -1,8 +1,8 @@
-mod grpc;
 mod database;
+mod grpc;
 
-use super::{CSVFile, Storage, Empty, PostgresDB};
-use super::{DataPipelineReceiver};
+use super::DataPipelineReceiver;
+use super::{CSVFile, Empty, PostgresDB, Storage};
 
-pub use grpc::ProcessorGrpc;
 pub use database::ProcessorDatabase;
+pub use grpc::ProcessorGrpc;

@@ -1729,8 +1729,8 @@ dependencies = [
 
 [[package]]
 name = "stop-names"
-version = "0.3.0"
-source = "git+https://github.com/dump-dvb/stop-names#3cf1e9a6a5df23bfbf7b9e73484e5866f64611d2"
+version = "0.3.1"
+source = "git+https://github.com/dump-dvb/stop-names#6abf93278e2baf456b44425f211b5bb883ecabd0"
 dependencies = [
  "chrono",
  "serde",
@@ -1762,8 +1762,8 @@ checksum = "20518fe4a4c9acf048008599e464deb21beeae3d3578418951a189c235a7a9a8"
 
 [[package]]
 name = "telegrams"
-version = "0.2.0"
-source = "git+https://github.com/dump-dvb/telegrams#bb0dafd8bb74b8258b58c44ee12aed64d8feb098"
+version = "0.3.1"
+source = "git+https://github.com/dump-dvb/telegrams#c55f4ee5c86a5123e84297208dd1e6d3ed840b72"
 dependencies = [
  "chrono",
  "diesel",

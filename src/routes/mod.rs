@@ -1,5 +1,5 @@
-use super::{DataPipelineSender};
 use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
+use super::DataPipelineSender;
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
@@ -10,11 +10,11 @@ use telegrams::{R09ReceiveTelegram, TelegramMetaInformation};
 use actix_diesel::dsl::AsyncRunQueryDsl;
 use actix_web::Responder;
 use actix_web::{web, HttpRequest};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 
-use std::time::SystemTime;
 use std::sync::{Mutex, RwLock};
+use std::time::SystemTime;
 
 #[derive(Queryable, Debug, Clone)]
 pub struct Station {
@@ -23,23 +23,20 @@ pub struct Station {
     pub name: String,
     pub lat: f64,
     pub lon: f64,
-    pub region: i32,
+    pub region: String,
     pub owner: Uuid,
     pub approved: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Response {
-    success: bool
+    success: bool,
 }
 
 // /telegrams/r09/
 pub async fn formatted(
     filter: web::Data<RwLock<Filter>>,
-    sender: web::Data<(
-        Mutex<DataPipelineSender>,
-        Mutex<DataPipelineSender>,
-    )>,
+    sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
     database: web::Data<ClickyBuntyDatabase>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
@@ -90,7 +87,7 @@ pub async fn formatted(
     let meta = TelegramMetaInformation {
         time: SystemTime::now(),
         station: station.id,
-        region: station.region as u64,
+        region: station.region,
     };
 
     println!(
@@ -135,4 +132,3 @@ pub async fn raw(telegram: web::Json<RawData>) -> impl Responder {
     web::Json(Response { success: true })
 }
 */
-
