@@ -91,7 +91,6 @@ pub async fn formatted(
         time: SystemTime::now(),
         station: station.id,
         region: station.region as u64,
-        telegram_type: telegram.auth.telegram_type
     };
 
     println!(
