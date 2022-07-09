@@ -50,7 +50,7 @@ impl Storage for PostgresDB {
     async fn write(&mut self, data: R09SaveTelegram) {
         match diesel::insert_into(schema::r09_telegrams::table)
             .values(&data)
-            .get_result::<R09SaveTelegram>(&self.connection)
+            .execute(&self.connection)
         {
             Err(e) => {
                 println!("Postgres Error {:?}", e);

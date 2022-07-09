@@ -1763,7 +1763,7 @@ checksum = "20518fe4a4c9acf048008599e464deb21beeae3d3578418951a189c235a7a9a8"
 [[package]]
 name = "telegrams"
 version = "0.4.0"
-source = "git+https://github.com/dump-dvb/telegrams#a7e4f73aa5c968a790aba8d45a48332f55ceaf92"
+source = "git+https://github.com/dump-dvb/telegrams#2c6c78906babc43290170d2e626e9807d79b5d85"
 dependencies = [
  "chrono",
  "diesel",
