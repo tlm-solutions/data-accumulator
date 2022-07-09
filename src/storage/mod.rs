@@ -30,10 +30,11 @@ impl Storage for PostgresDB {
     fn new() -> PostgresDB {
         let default_postgres_host = String::from("localhost:5433");
         let default_postgres_port = String::from("5432");
+        let default_postgres_pw = String::from("default_pw");
 
         let postgres_host = format!(
             "postgres://telegrams:{}@{}:{}/telegrams",
-            env::var("POSTGRES_TELEGRAMS_PASSWORD").unwrap(),
+            env::var("POSTGRES_TELEGRAMS_PASSWORD").unwrap_or(default_postgres_pw.clone()),
             env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );
