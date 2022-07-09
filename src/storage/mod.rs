@@ -33,7 +33,7 @@ impl Storage for PostgresDB {
 
         let postgres_host = format!(
             "postgres://telegrams:{}@{}:{}/telegrams",
-            env::var("POSTGRES_PASSWORD").unwrap(),
+            env::var("POSTGRES_TELEGRAMS_PASSWORD").unwrap(),
             env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );

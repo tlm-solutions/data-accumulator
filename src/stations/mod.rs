@@ -13,7 +13,7 @@ impl ClickyBuntyDatabase {
 
         let postgres_host = format!(
             "postgres://dvbdump:{}@{}:{}/dvbdump",
-            env::var("POSTGRES_PASSWORD").unwrap(),
+            env::var("POSTGRES_DVBDUMP_PASSWORD").unwrap(),
             env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );
