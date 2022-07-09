@@ -5,7 +5,7 @@ table! {
         name -> Text,
         lat -> Double,
         lon -> Double,
-        region -> Text,
+        region -> Integer,
         owner -> Uuid,
         approved -> Bool,
     }

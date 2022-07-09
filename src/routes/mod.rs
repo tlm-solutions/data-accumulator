@@ -23,7 +23,7 @@ pub struct Station {
     pub name: String,
     pub lat: f64,
     pub lon: f64,
-    pub region: String,
+    pub region: i32,
     pub owner: Uuid,
     pub approved: bool,
 }
