@@ -41,6 +41,7 @@ pub async fn formatted(
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
+    println!("[DEBUG] Received Telegram: {:?}", &telegram);
     let telegram_hash = Filter::calculate_hash(&telegram).await;
     let contained;
     // checks if the given telegram is already in the buffer
