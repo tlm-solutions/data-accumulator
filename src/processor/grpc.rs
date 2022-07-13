@@ -34,6 +34,7 @@ impl ProcessorGrpc {
 
             //TODO: optimize
             for grpc_host in self.grpc_hosts.clone().into_iter() {
+                let grpc_host_copy = grpc_host.clone();
                 match ReceivesTelegramsClient::connect(grpc_host).await {
                     Ok(mut client) => {
                         let request = tonic::Request::new(R09GrpcTelegram::from(
@@ -48,8 +49,7 @@ impl ProcessorGrpc {
                         }
                     }
                     Err(e) => {
-                        println!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", &grpc_host, &e);
-                        stdout().flush();
+                        println!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", grpc_host_copy, &e);
                     }
                 };
             }
