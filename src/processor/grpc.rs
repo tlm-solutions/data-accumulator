@@ -47,9 +47,9 @@ impl ProcessorGrpc {
                             _ => {}
                         }
                     }
-                    Err(_) => {
-                        //println!("[ProcessorGrpc] Cannot connect to GRPC Host: {}", &grpc_host);
-                        //stdout().flush();
+                    Err(e) => {
+                        println!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", &grpc_host, &e);
+                        stdout().flush();
                     }
                 };
             }
