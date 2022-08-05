@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use std::sync::{Mutex, RwLock};
-use std::time::SystemTime;
+use chrono::Utc;
 
 #[derive(Queryable, Debug, Clone)]
 pub struct Station {
@@ -86,7 +86,7 @@ pub async fn formatted(
     }
 
     let meta = TelegramMetaInformation {
-        time: SystemTime::now(),
+        time: Utc::now().naive_utc(),
         station: station.id,
         region: station.region,
     };
