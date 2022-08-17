@@ -13,7 +13,7 @@ mod structs;
 
 use filter::Filter;
 use processor::{ProcessorDatabase, ProcessorGrpc};
-pub use routes::{formatted, Station};
+pub use routes::{receiving_r09, Station};
 use stations::ClickyBuntyDatabase;
 pub use storage::{CSVFile, Empty, PostgresDB, Storage};
 use structs::Args;
@@ -39,8 +39,14 @@ async fn main() -> std::io::Result<()> {
     println!("Starting Data Collection Server ... ");
     let host = args.host.as_str();
     let port = args.port;
+    
+    let database_struct;
+    if args.offline {
+        database_struct = web::Data::new(ClickyBuntyDatabase::offline());
+    } else {
+        database_struct = web::Data::new(ClickyBuntyDatabase::new());
+    };
 
-    let database_struct = web::Data::new(ClickyBuntyDatabase::new());
     let filter = web::Data::new(RwLock::new(Filter::new()));
 
     let (sender_database, receiver_database) =
@@ -78,7 +84,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(filter.clone())
             .app_data(request_data.clone())
             .app_data(database_struct.clone())
-            .route("/telegram/r09", web::post().to(formatted))
+            .route("/telegram/r09", web::post().to(receiving_r09))
         //.route("/telegram/raw", web::post().to(raw))
     })
     .bind((host, port))?

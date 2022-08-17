@@ -3,7 +3,7 @@ use diesel::pg::PgConnection;
 use std::env;
 
 pub struct ClickyBuntyDatabase {
-    pub db: Database<PgConnection>,
+    pub db: Option<Database<PgConnection>>,
 }
 
 impl ClickyBuntyDatabase {
@@ -22,6 +22,14 @@ impl ClickyBuntyDatabase {
         println!("Connecting to postgres database {}", &postgres_host);
         let db = Database::builder().open(postgres_host);
 
-        ClickyBuntyDatabase { db: db }
+        ClickyBuntyDatabase { 
+            db: Some(db) 
+        }
+    }
+
+    pub fn offline() -> ClickyBuntyDatabase {
+        ClickyBuntyDatabase {
+            db: None
+        }
     }
 }

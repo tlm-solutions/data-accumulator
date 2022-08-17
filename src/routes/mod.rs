@@ -34,7 +34,7 @@ pub struct Response {
 }
 
 // /telegrams/r09/
-pub async fn formatted(
+pub async fn receiving_r09(
     filter: web::Data<RwLock<Filter>>,
     sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
     database: web::Data<ClickyBuntyDatabase>,
@@ -53,48 +53,61 @@ pub async fn formatted(
     if contained {
         return web::Json(Response { success: false });
     }
+    
+    let meta: TelegramMetaInformation;
 
-    // updates the buffer adding the new telegram
-    {
-        let mut writeable_filter = filter.write().unwrap();
-        let index = writeable_filter.iterator;
-        writeable_filter.last_elements[index] = telegram_hash;
-        writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
-    }
-    // query database for this station
-    let station;
-    match (stations::table
-        .filter(stations::id.eq(telegram.auth.station))
-        .get_result_async::<Station>(&database.db))
-    .await
-    {
-        Ok(data) => {
-            station = data;
+    match &database.db {
+        Some(database_connection) => {
+            // updates the buffer adding the new telegram
+            {
+                let mut writeable_filter = filter.write().unwrap();
+                let index = writeable_filter.iterator;
+                writeable_filter.last_elements[index] = telegram_hash;
+                writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+            }
+            // query database for this station
+            let station;
+            match (stations::table
+                .filter(stations::id.eq(telegram.auth.station))
+                .get_result_async::<Station>(&database_connection))
+            .await
+            {
+                Ok(data) => {
+                    station = data;
+                }
+                Err(e) => {
+                    println!("Err: {:?}", e);
+                    return web::Json(Response { success: false });
+                }
+            };
+
+            if station.id != telegram.auth.station
+                || station.token != Some(telegram.auth.token.clone())
+                || !station.approved
+            {
+                // authentication for telegram failed !
+                return web::Json(Response { success: false });
+            }
+            meta = TelegramMetaInformation {
+                time: Utc::now().naive_utc(),
+                station: station.id,
+                region: station.region,
+            };
+            println!(
+                "[main] Received Telegram! {} {:?}",
+                &telegram.auth.station, &telegram
+            );
+
         }
-        Err(e) => {
-            println!("Err: {:?}", e);
-            return web::Json(Response { success: false });
+        None => {
+            meta = TelegramMetaInformation {
+                time: Utc::now().naive_utc(),
+                station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+                region: -1 //TODO: change
+            }
         }
-    };
-
-    if station.id != telegram.auth.station
-        || station.token != Some(telegram.auth.token.clone())
-        || !station.approved
-    {
-        // authentication for telegram failed !
-        return web::Json(Response { success: false });
     }
 
-    let meta = TelegramMetaInformation {
-        time: Utc::now().naive_utc(),
-        station: station.id,
-        region: station.region,
-    };
-
-    println!(
-        "[main] Received Telegram! {} {:?}",
-        &telegram.auth.station, &telegram
-    );
     match sender
         .0
         .lock()
