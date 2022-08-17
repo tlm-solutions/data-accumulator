@@ -5,7 +5,7 @@ use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
 use crate::{schema::stations, ClickyBuntyDatabase};
 
-use telegrams::{R09ReceiveTelegram, TelegramMetaInformation};
+use dump_dvb::telegrams::{TelegramMetaInformation, r09::R09ReceiveTelegram};
 
 use actix_diesel::dsl::AsyncRunQueryDsl;
 use actix_web::Responder;

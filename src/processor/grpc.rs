@@ -1,7 +1,7 @@
 use super::DataPipelineReceiver;
 use std::env;
 
-use telegrams::{R09GrpcTelegram, ReceivesTelegramsClient};
+use dump_dvb::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
 
 pub struct ProcessorGrpc {
     grpc_hosts: Vec<String>,

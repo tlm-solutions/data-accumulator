@@ -2,7 +2,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use telegrams::R09ReceiveTelegram;
+use dump_dvb::telegrams::r09::R09ReceiveTelegram;
 
 pub const DEPULICATION_BUFFER_SIZE: usize = 20;
 

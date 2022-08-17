@@ -660,11 +660,11 @@ dependencies = [
  "derive_builder",
  "diesel",
  "dotenv",
+ "dump-dvb",
  "futures 0.1.31",
  "prost",
  "serde",
  "serde_json",
- "telegrams",
  "tokio",
  "tonic",
  "tonic-build",
@@ -756,6 +756,23 @@ name = "dotenv"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
+
+[[package]]
+name = "dump-dvb"
+version = "0.1.0"
+source = "git+https://github.com/dump-dvb/dump-dvb.rs#8c10db6f637c9c0235b68bea17ff55da4fcfc809"
+dependencies = [
+ "chrono",
+ "csv",
+ "diesel",
+ "dotenv",
+ "prost",
+ "serde",
+ "serde_json",
+ "tonic",
+ "tonic-build",
+ "uuid",
+]
 
 [[package]]
 name = "either"
@@ -1728,16 +1745,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stop-names"
-version = "0.5.0"
-source = "git+https://github.com/dump-dvb/stop-names#ea7322c691255a7afc3fd96aef32aef3f48bc15e"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1759,23 +1766,6 @@ name = "sync_wrapper"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20518fe4a4c9acf048008599e464deb21beeae3d3578418951a189c235a7a9a8"
-
-[[package]]
-name = "telegrams"
-version = "0.6.0"
-source = "git+https://github.com/dump-dvb/telegrams#2d2e7f7b470a755471fbaf07b995ee9a6d4606d8"
-dependencies = [
- "chrono",
- "diesel",
- "dotenv",
- "prost",
- "serde",
- "serde_json",
- "stop-names",
- "tonic",
- "tonic-build",
- "uuid",
-]
 
 [[package]]
 name = "tempfile"

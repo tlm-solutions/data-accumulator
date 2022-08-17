@@ -1,6 +1,6 @@
 use super::{CSVFile, DataPipelineReceiver, Empty, PostgresDB, Storage};
 use std::env;
-use telegrams::R09SaveTelegram;
+use dump_dvb::telegrams::r09::R09SaveTelegram;
 
 pub struct ProcessorDatabase {
     backend: Box<dyn Storage>,

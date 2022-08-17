@@ -4,7 +4,8 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use std::env;
 use std::fs::{File, OpenOptions};
-use telegrams::{schema, R09SaveTelegram};
+use dump_dvb::telegrams::r09::R09SaveTelegram;
+use dump_dvb::schema;
 
 #[async_trait]
 pub trait Storage {
