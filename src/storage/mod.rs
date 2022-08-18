@@ -75,7 +75,7 @@ impl Storage for CSVFile {
 
     async fn write(&mut self, data: R09SaveTelegram) {
         let file: File;
-        let mut file_existed: bool = true;
+        let mut create_headers: bool = true;
         if std::path::Path::new(&self.file_path).exists() {
             file = OpenOptions::new()
                 .write(true)
@@ -83,13 +83,17 @@ impl Storage for CSVFile {
                 .open(&self.file_path)
                 .unwrap();
 
-            file_existed = false;
+            create_headers = false;
         } else {
             file = File::create(&self.file_path).unwrap();
         }
         let mut wtr = WriterBuilder::new()
-            .has_headers(file_existed)
+            .has_headers(create_headers)
             .from_writer(file);
+
+        if create_headers {
+            wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY);
+        }
 
         wtr.serialize(data).expect("Cannot serialize data");
         wtr.flush().expect("Cannot flush csv file");

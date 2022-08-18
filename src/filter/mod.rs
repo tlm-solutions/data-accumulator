@@ -2,9 +2,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use dump_dvb::telegrams::r09::R09ReceiveTelegram;
-
-pub const DEPULICATION_BUFFER_SIZE: usize = 20;
+pub const DEPULICATION_BUFFER_SIZE: usize = 30;
 
 pub struct Filter {
     pub last_elements: [u64; DEPULICATION_BUFFER_SIZE], // vector of hashes for deduplication
@@ -19,7 +17,7 @@ impl Filter {
         }
     }
 
-    pub async fn calculate_hash(t: &R09ReceiveTelegram) -> u64 {
+    pub async fn calculate_hash<T: Hash>(t: &T) -> u64 {
         let mut s = DefaultHasher::new();
         t.hash(&mut s);
         s.finish()

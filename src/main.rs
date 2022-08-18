@@ -13,7 +13,7 @@ mod structs;
 
 use filter::Filter;
 use processor::{ProcessorDatabase, ProcessorGrpc};
-pub use routes::{receiving_r09, Station};
+pub use routes::{receiving_r09, receiving_raw, Station};
 use stations::ClickyBuntyDatabase;
 pub use storage::{CSVFile, Empty, PostgresDB, Storage};
 use structs::Args;
@@ -26,10 +26,11 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
 use std::sync::{Mutex, RwLock};
 use std::thread;
+use std::any::Any;
 
 use dump_dvb::telegrams::{TelegramMetaInformation, r09::R09Telegram };
 
-pub type DataPipelineSender = SyncSender<(R09Telegram, TelegramMetaInformation)>;
+pub type DataPipelineSender = SyncSender<(Box<dyn Any>, TelegramMetaInformation)>;
 pub type DataPipelineReceiver = Receiver<(R09Telegram, TelegramMetaInformation)>;
 
 #[actix_web::main]
@@ -85,6 +86,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(request_data.clone())
             .app_data(database_struct.clone())
             .route("/telegram/r09", web::post().to(receiving_r09))
+            .route("/telegram/raw", web::post().to(receiving_raw))
         //.route("/telegram/raw", web::post().to(raw))
     })
     .bind((host, port))?
