@@ -18,6 +18,6 @@ pub struct Args {
     #[clap(short, long, default_value_t = String::from("http://[::1]:50051"))]
     pub grpc_host: String,
 
-    #[clap(short, long, default_value_t = false)]
+    #[clap(short, long, action)]
     pub offline: bool
 }
