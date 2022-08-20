@@ -19,6 +19,7 @@ pub use storage::{CSVFile, Empty, PostgresDB, Storage};
 use structs::Args;
 
 use actix_web::{web, App, HttpServer};
+use actix_web::{middleware::Logger};
 use clap::Parser;
 use tokio::runtime::Builder;
 
@@ -86,6 +87,7 @@ async fn main() -> std::io::Result<()> {
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .app_data(copy_able_filter.clone())
             .app_data(copy_able_sender.clone())
             .app_data(copy_able_database.clone())
