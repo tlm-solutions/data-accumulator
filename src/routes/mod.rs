@@ -1,5 +1,5 @@
 use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
-use super::{DataPipelineSender, ApplicationState};
+use super::{DataPipelineSenderR09, ApplicationState};
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
@@ -7,8 +7,8 @@ use crate::{schema::stations, ClickyBuntyDatabase};
 
 use dump_dvb::telegrams::{
     TelegramMetaInformation, 
-    r09::R09ReceiveTelegram,
-    raw::RawReceiveTelegram,
+    r09::{R09ReceiveTelegram, R09Telegram},
+    raw::{RawReceiveTelegram, RawTelegram}
 };
 
 use actix_diesel::dsl::AsyncRunQueryDsl;
@@ -126,10 +126,10 @@ pub async fn receiving_r09(
         }
         _ => {}
     }
-    match app_state.lock().unwrap().database_sender
+    match app_state.lock().unwrap().database_r09_sender
         .lock()
         .unwrap()
-        .try_send(((*telegram).data.clone(), meta))
+        .try_send((((*telegram).data.clone()), meta))
     {
         Err(err) => {
             println!("[main] Channel Database has problems! {:?}", err);
@@ -140,22 +140,23 @@ pub async fn receiving_r09(
     web::Json(Response { success: true })
 }
 
-/*
+// /telegrams/raw/
 pub async fn receiving_raw(
-    filter: web::Data<Arc<RwLock<Filter>>>,
-    sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
-    database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
+    app_state: web::Data<Arc<Mutex<ApplicationState>>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
     println!("[DEBUG] Received Telegram: {:?}", &telegram);
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
-    let contained;
     // checks if the given telegram is already in the buffer
-    {
-        let readable_filter = filter.read().unwrap();
-        contained = readable_filter.last_elements.contains(&telegram_hash);
-    }
+    let contained = app_state
+        .lock()
+        .unwrap()
+        .filter
+        .lock()
+        .unwrap()
+        .last_elements
+        .contains(&telegram_hash);
 
     if contained {
         return web::Json(Response { success: false });
@@ -163,21 +164,21 @@ pub async fn receiving_raw(
     
     // updates the buffer adding the new telegram
     {
-        let mut writeable_filter = filter.write().unwrap();
+        let mut writeable_app_state = app_state.lock().unwrap();
+        let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
         let index = writeable_filter.iterator;
         writeable_filter.last_elements[index] = telegram_hash;
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
     let meta: TelegramMetaInformation;
-
-    if database.lock().unwrap().db.is_none() {
+    if app_state.lock().unwrap().database.lock().unwrap().db.is_none() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.lock().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -214,12 +215,22 @@ pub async fn receiving_raw(
             region: -1 //TODO: change
         }
     }
-
-    match sender
-        .1
+    /*
+    match app_state.lock().unwrap().grpc_sender
         .lock()
         .unwrap()
-        .try_send((Box::new((*telegram).data.clone()), meta))
+        .try_send(((*telegram).data.clone(), meta.clone()))
+    {
+        Err(err) => {
+            println!("[main] Channel GRPC has problems! {:?}", err);
+        }
+        _ => {}
+    }
+    */
+    match app_state.lock().unwrap().database_raw_sender
+        .lock()
+        .unwrap()
+        .try_send((((*telegram).data.clone()), meta))
     {
         Err(err) => {
             println!("[main] Channel Database has problems! {:?}", err);
@@ -229,4 +240,3 @@ pub async fn receiving_raw(
 
     web::Json(Response { success: true })
 }
-*/

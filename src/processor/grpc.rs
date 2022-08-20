@@ -1,15 +1,15 @@
-use super::DataPipelineReceiver;
+use super::DataPipelineReceiverR09;
 use std::env;
 
 use dump_dvb::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
 
 pub struct ProcessorGrpc {
     grpc_hosts: Vec<String>,
-    receiver_grpc: DataPipelineReceiver,
+    receiver_grpc: DataPipelineReceiverR09,
 }
 
 impl ProcessorGrpc {
-    pub fn new(receiver_grpc: DataPipelineReceiver) -> ProcessorGrpc {
+    pub fn new(receiver_grpc: DataPipelineReceiverR09) -> ProcessorGrpc {
         let mut grpc_hosts = Vec::new();
 
         for (k, v) in env::vars() {

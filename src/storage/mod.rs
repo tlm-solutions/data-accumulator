@@ -4,7 +4,8 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use std::env;
 use std::fs::{File, OpenOptions};
-use dump_dvb::telegrams::r09::R09SaveTelegram;
+use serde::Serialize;
+use dump_dvb::telegrams::{r09::R09SaveTelegram, raw::RawSaveTelegram};
 use dump_dvb::schema;
 
 #[async_trait]
@@ -13,11 +14,13 @@ pub trait Storage {
     where
         Self: Sized;
     async fn setup(&mut self);
-    async fn write(&mut self, data: R09SaveTelegram);
+    async fn write_r09(&mut self, data: R09SaveTelegram);
+    async fn write_raw(&mut self, data: RawSaveTelegram);
 }
 
 pub struct CSVFile {
-    pub file_path: String,
+    pub file_path_r09: Option<String>,
+    pub file_path_raw: Option<String>,
 }
 
 pub struct PostgresDB {
@@ -48,8 +51,20 @@ impl Storage for PostgresDB {
 
     async fn setup(&mut self) {}
 
-    async fn write(&mut self, data: R09SaveTelegram) {
+    async fn write_r09(&mut self, data: R09SaveTelegram) {
         match diesel::insert_into(schema::r09_telegrams::table)
+            .values(&data)
+            .execute(&self.connection)
+        {
+            Err(e) => {
+                println!("Postgres Error {:?}", e);
+            }
+            _ => {}
+        };
+    }
+
+    async fn write_raw(&mut self, data: RawSaveTelegram) {
+        match diesel::insert_into(schema::raw_telegrams::table)
             .values(&data)
             .execute(&self.connection)
         {
@@ -61,31 +76,20 @@ impl Storage for PostgresDB {
     }
 }
 
-#[async_trait]
-impl Storage for CSVFile {
-    fn new() -> CSVFile {
-        let resource = env::var("CSV_FILE").expect("Need to specify a csv file");
-        println!("CSV File writes to {}", resource);
-        CSVFile {
-            file_path: resource.clone(),
-        }
-    }
-
-    async fn setup(&mut self) {}
-
-    async fn write(&mut self, data: R09SaveTelegram) {
+impl CSVFile {
+    fn write<T: Serialize>(file_path: &String, telegram: T) {
         let file: File;
         let mut create_headers: bool = true;
-        if std::path::Path::new(&self.file_path).exists() {
+        if std::path::Path::new(file_path).exists() {
             file = OpenOptions::new()
                 .write(true)
                 .append(true)
-                .open(&self.file_path)
+                .open(file_path)
                 .unwrap();
 
             create_headers = false;
         } else {
-            file = File::create(&self.file_path).unwrap();
+            file = File::create(file_path).unwrap();
         }
         let mut wtr = WriterBuilder::new()
             .has_headers(create_headers)
@@ -95,8 +99,38 @@ impl Storage for CSVFile {
             wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY);
         }
 
-        wtr.serialize(data).expect("Cannot serialize data");
+        wtr.serialize(telegram).expect("Cannot serialize data");
         wtr.flush().expect("Cannot flush csv file");
+    }
+}
+
+#[async_trait]
+impl Storage for CSVFile {
+    fn new() -> CSVFile {
+        CSVFile {
+            file_path_r09: env::var("CSV_FILE_R09").ok(),
+            file_path_raw: env::var("CSV_FILE_RAW").ok(),
+        }
+    }
+
+    async fn setup(&mut self) {}
+
+
+    async fn write_r09(&mut self, data: R09SaveTelegram) {
+        match &self.file_path_r09 {
+            Some(file_path) => {
+                CSVFile::write::<R09SaveTelegram>(&file_path, data);
+            }
+            None => {}
+        }
+    }
+    async fn write_raw(&mut self, data: RawSaveTelegram) {
+        match &self.file_path_raw {
+            Some(file_path) => {
+                CSVFile::write::<RawSaveTelegram>(&file_path, data);
+            }
+            None => {}
+        }
     }
 }
 
@@ -106,5 +140,6 @@ impl Storage for Empty {
         Empty {}
     }
     async fn setup(&mut self) {}
-    async fn write(&mut self, _data: R09SaveTelegram) {}
+    async fn write_r09(&mut self, _data: R09SaveTelegram) {}
+    async fn write_raw(&mut self, _data: RawSaveTelegram) {}
 }
