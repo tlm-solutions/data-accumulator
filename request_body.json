@@ -1,18 +1,16 @@
-{
-    "station_id": "61ef8e8b-f4d8-4d1d-8fa8-1a1d3d48888e",
-    "token": "yTgS5f90jbbGHRK0d19Hw4sEeT48l2VR",
-    "time_stamp": 0,
-    "line": "014",
-    "destination_number": "08",
-    "priority": 2,
-    "sign_of_deviation": 1,
-    "value_of_deviation": 2,
-    "reporting_point": 0,
-    "request_for_priority": 1,
-    "run_number": "09",
-    "reserve": 0,
-    "train_length": 0,
-    "junction": 0,
-    "junction_number": 0,
-    "request_status": 0
+{ 
+    "station": "8aa034af-3545-4c36-b235-17e46cad6f07",
+    "token": "mrQsX1JdF5NpSI37e5C5xl1uO5QIvOgk",
+    "telegram_type": 16, 
+    "delay": 0, 
+    "reporting_point": 10514, 
+    "junction": 262, 
+    "direction": 8, 
+    "request_status": 2, 
+    "priority": 0, 
+    "direction_request": 0, 
+    "line": 18, 
+    "run_number": 62, 
+    "destination_number": 809, 
+    "train_length": 0 
 }

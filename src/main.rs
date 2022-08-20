@@ -24,7 +24,7 @@ use tokio::runtime::Builder;
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, RwLock, Arc};
 use std::thread;
 use std::any::Any;
 
@@ -40,12 +40,12 @@ async fn main() -> std::io::Result<()> {
     println!("Starting Data Collection Server ... ");
     let host = args.host.as_str();
     let port = args.port;
-    
+
     let database_struct;
     if args.offline {
-        database_struct = web::Data::new(ClickyBuntyDatabase::offline());
+        database_struct = Arc::new(Mutex::new(ClickyBuntyDatabase::offline()));
     } else {
-        database_struct = web::Data::new(ClickyBuntyDatabase::new());
+        database_struct = Arc::new(Mutex::new(ClickyBuntyDatabase::new()));
     };
 
     let filter = web::Data::new(RwLock::new(Filter::new()));

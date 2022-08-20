@@ -17,7 +17,7 @@ use actix_web::{web, HttpRequest};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, RwLock, Arc};
 use chrono::Utc;
 
 #[derive(Queryable, Debug, Clone)]
@@ -41,7 +41,7 @@ pub struct Response {
 pub async fn receiving_r09(
     filter: web::Data<RwLock<Filter>>,
     sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
-    database: web::Data<ClickyBuntyDatabase>,
+    database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
@@ -67,15 +67,13 @@ pub async fn receiving_r09(
     }
 
     let meta: TelegramMetaInformation;
-
-    match &database.db {
-        Some(database_connection) => {
-
+    if database.lock().unwrap().db.is_none() {
+        let station;
+        {
             // query database for this station
-            let station;
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&database_connection))
+                .get_result_async::<Station>(&database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -86,32 +84,30 @@ pub async fn receiving_r09(
                     return web::Json(Response { success: false });
                 }
             };
-
-            if station.id != telegram.auth.station
-                || station.token != Some(telegram.auth.token.clone())
-                || !station.approved
-            {
-                // authentication for telegram failed !
-                return web::Json(Response { success: false });
-            }
-            meta = TelegramMetaInformation {
-                time: Utc::now().naive_utc(),
-                station: station.id,
-                region: station.region,
-            };
-            println!(
-                "[main] Received Telegram! {} {:?}",
-                &telegram.auth.station, &telegram
-            );
-
         }
-        None => {
-            // offline flag is set throw data out unauthenticated
-            meta = TelegramMetaInformation {
-                time: Utc::now().naive_utc(),
-                station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-                region: -1 //TODO: change
-            }
+        if station.id != telegram.auth.station
+            || station.token != Some(telegram.auth.token.clone())
+            || !station.approved
+        {
+            // authentication for telegram failed !
+            return web::Json(Response { success: false });
+        }
+        meta = TelegramMetaInformation {
+            time: Utc::now().naive_utc(),
+            station: station.id,
+            region: station.region,
+        };
+        println!(
+            "[main] Received Telegram! {} {:?}",
+            &telegram.auth.station, &telegram
+        );
+
+    } else {
+        // offline flag is set throw data out unauthenticated
+        meta = TelegramMetaInformation {
+            time: Utc::now().naive_utc(),
+            station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+            region: -1 //TODO: change
         }
     }
 
@@ -144,7 +140,7 @@ pub async fn receiving_r09(
 pub async fn receiving_raw(
     filter: web::Data<RwLock<Filter>>,
     sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
-    database: web::Data<ClickyBuntyDatabase>,
+    database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
@@ -171,14 +167,13 @@ pub async fn receiving_raw(
 
     let meta: TelegramMetaInformation;
 
-    match &database.db {
-        Some(database_connection) => {
-
+    if database.lock().unwrap().db.is_none() {
+        let station;
+        {
             // query database for this station
-            let station;
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&database_connection))
+                .get_result_async::<Station>(&database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -189,32 +184,30 @@ pub async fn receiving_raw(
                     return web::Json(Response { success: false });
                 }
             };
-
-            if station.id != telegram.auth.station
-                || station.token != Some(telegram.auth.token.clone())
-                || !station.approved
-            {
-                // authentication for telegram failed !
-                return web::Json(Response { success: false });
-            }
-            meta = TelegramMetaInformation {
-                time: Utc::now().naive_utc(),
-                station: station.id,
-                region: station.region,
-            };
-            println!(
-                "[main] Received Telegram! {} {:?}",
-                &telegram.auth.station, &telegram
-            );
-
         }
-        None => {
-            // offline flag is set throw data out unauthenticated
-            meta = TelegramMetaInformation {
-                time: Utc::now().naive_utc(),
-                station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-                region: -1 //TODO: change
-            }
+        if station.id != telegram.auth.station
+            || station.token != Some(telegram.auth.token.clone())
+            || !station.approved
+        {
+            // authentication for telegram failed !
+            return web::Json(Response { success: false });
+        }
+        meta = TelegramMetaInformation {
+            time: Utc::now().naive_utc(),
+            station: station.id,
+            region: station.region,
+        };
+        println!(
+            "[main] Received Telegram! {} {:?}",
+            &telegram.auth.station, &telegram
+        );
+
+    } else {
+        // offline flag is set throw data out unauthenticated
+        meta = TelegramMetaInformation {
+            time: Utc::now().naive_utc(),
+            station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+            region: -1 //TODO: change
         }
     }
 
