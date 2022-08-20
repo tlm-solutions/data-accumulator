@@ -1,14 +1,14 @@
 use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
-use super::{DataPipelineSenderR09, ApplicationState};
+use super::ApplicationState;
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
-use crate::{schema::stations, ClickyBuntyDatabase};
+use crate::schema::stations;
 
 use dump_dvb::telegrams::{
     TelegramMetaInformation, 
-    r09::{R09ReceiveTelegram, R09Telegram},
-    raw::{RawReceiveTelegram, RawTelegram}
+    r09::R09ReceiveTelegram,
+    raw::RawReceiveTelegram
 };
 
 use actix_diesel::dsl::AsyncRunQueryDsl;
@@ -16,8 +16,9 @@ use actix_web::Responder;
 use actix_web::{web, HttpRequest};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use log::{info, warn, error};
 
-use std::sync::{Mutex, RwLock, Arc};
+use std::sync::RwLock;
 use chrono::Utc;
 
 #[derive(Queryable, Debug, Clone)]
@@ -39,53 +40,65 @@ pub struct Response {
 
 // /telegrams/r09/
 pub async fn receiving_r09(
-    app_state: web::Data<Arc<Mutex<ApplicationState>>>,
+    app_state: web::Data<RwLock<ApplicationState>>,
     //filter: web::Data<Arc<RwLock<Filter>>>,
     //sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
     //database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
-    println!("[DEBUG] Received Telegram: {:?}", &telegram);
+    info!("[DEBUG] Station: {} Received Telegram: {:?}", &telegram.auth.station, &telegram.data);
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
     // checks if the given telegram is already in the buffer
-    let contained = app_state
-        .lock()
-        .unwrap()
-        .filter
-        .lock()
-        .unwrap()
-        .last_elements
-        .contains(&telegram_hash);
+    let contained = match (*app_state).read() {
+        Ok(unlocked) => {
+            unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
+        }
+        Err(_) => {
+            // clear poisen and ignore telegram
+            //(***app_state).clear_poison();
+            true
+        }
+    };
 
     if contained {
         return web::Json(Response { success: false });
     }
-    
+
     // updates the buffer adding the new telegram
-    {
-        let mut writeable_app_state = app_state.lock().unwrap();
-        let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
-        let index = writeable_filter.iterator;
-        writeable_filter.last_elements[index] = telegram_hash;
-        writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+    match app_state.write() {
+        Ok(writeable_app_state) => {
+            let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
+            let index = writeable_filter.iterator;
+            writeable_filter.last_elements[index] = telegram_hash;
+            writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+        }
+        Err(_) => {
+            //app_state.clear_poison();
+            return web::Json(Response { success: false });
+        }
     }
 
     let meta: TelegramMetaInformation;
-    if app_state.lock().unwrap().database.lock().unwrap().db.is_some() {
+
+    if app_state.is_poisoned() {
+        //app_state.clear_poison();
+    }
+
+    if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.lock().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.write().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
                     station = data;
                 }
                 Err(e) => {
-                    println!("Err: {:?}", e);
+                    error!("Err: {:?}", e);
                     return web::Json(Response { success: false });
                 }
             };
@@ -102,7 +115,7 @@ pub async fn receiving_r09(
             station: station.id,
             region: station.region,
         };
-        println!(
+        info!(
             "[main] Received Telegram! {} {:?}",
             &telegram.auth.station, &telegram
         );
@@ -112,27 +125,27 @@ pub async fn receiving_r09(
         meta = TelegramMetaInformation {
             time: Utc::now().naive_utc(),
             station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            region: -1 //TODO: change
+            region: -1
         }
     }
 
-    match app_state.lock().unwrap().grpc_sender
+    match app_state.write().unwrap().grpc_sender
         .lock()
         .unwrap()
         .try_send(((*telegram).data.clone(), meta.clone()))
     {
         Err(err) => {
-            println!("[main] Channel GRPC has problems! {:?}", err);
+            warn!("[main] Channel GRPC has problems! {:?}", err);
         }
         _ => {}
     }
-    match app_state.lock().unwrap().database_r09_sender
+    match app_state.write().unwrap().database_r09_sender
         .lock()
         .unwrap()
         .try_send((((*telegram).data.clone()), meta))
     {
         Err(err) => {
-            println!("[main] Channel Database has problems! {:?}", err);
+            warn!("[main] Channel Database has problems! {:?}", err);
         }
         _ => {}
     }
@@ -142,50 +155,62 @@ pub async fn receiving_r09(
 
 // /telegrams/raw/
 pub async fn receiving_raw(
-    app_state: web::Data<Arc<Mutex<ApplicationState>>>,
+    app_state: web::Data<RwLock<ApplicationState>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
-    println!("[DEBUG] Received Telegram: {:?}", &telegram);
+    info!("[DEBUG] Station: {} Received Telegram: {:?}", &telegram.auth.station, &telegram.data);
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
     // checks if the given telegram is already in the buffer
-    let contained = app_state
-        .lock()
-        .unwrap()
-        .filter
-        .lock()
-        .unwrap()
-        .last_elements
-        .contains(&telegram_hash);
+    let contained = match (*app_state).read() {
+        Ok(unlocked) => {
+            unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
+        }
+        Err(_) => {
+            // clear poisen and ignore telegram
+            //(***app_state).clear_poison();
+            true
+        }
+    };
 
     if contained {
         return web::Json(Response { success: false });
     }
-    
+
     // updates the buffer adding the new telegram
-    {
-        let mut writeable_app_state = app_state.lock().unwrap();
-        let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
-        let index = writeable_filter.iterator;
-        writeable_filter.last_elements[index] = telegram_hash;
-        writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+    match app_state.write() {
+        Ok(writeable_app_state) => {
+            let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
+            let index = writeable_filter.iterator;
+            writeable_filter.last_elements[index] = telegram_hash;
+            writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+        }
+        Err(_) => {
+            //app_state.clear_poison();
+            return web::Json(Response { success: false });
+        }
     }
 
     let meta: TelegramMetaInformation;
-    if app_state.lock().unwrap().database.lock().unwrap().db.is_some() {
+
+    if app_state.is_poisoned() {
+        //app_state.clear_poison();
+    }
+
+    if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.lock().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.write().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
                     station = data;
                 }
                 Err(e) => {
-                    println!("Err: {:?}", e);
+                    error!("Err: {:?}", e);
                     return web::Json(Response { success: false });
                 }
             };
@@ -202,7 +227,7 @@ pub async fn receiving_raw(
             station: station.id,
             region: station.region,
         };
-        println!(
+        info!(
             "[main] Received Telegram! {} {:?}",
             &telegram.auth.station, &telegram
         );
@@ -212,28 +237,17 @@ pub async fn receiving_raw(
         meta = TelegramMetaInformation {
             time: Utc::now().naive_utc(),
             station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            region: -1 //TODO: change
+            region: -1
         }
     }
-    /*
-    match app_state.lock().unwrap().grpc_sender
-        .lock()
-        .unwrap()
-        .try_send(((*telegram).data.clone(), meta.clone()))
-    {
-        Err(err) => {
-            println!("[main] Channel GRPC has problems! {:?}", err);
-        }
-        _ => {}
-    }
-    */
-    match app_state.lock().unwrap().database_raw_sender
+
+    match app_state.write().unwrap().database_raw_sender
         .lock()
         .unwrap()
         .try_send((((*telegram).data.clone()), meta))
     {
         Err(err) => {
-            println!("[main] Channel Database has problems! {:?}", err);
+            warn!("[main] Channel Database has problems! {:?}", err);
         }
         _ => {}
     }

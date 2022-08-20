@@ -1,12 +1,15 @@
+use dump_dvb::telegrams::{r09::R09SaveTelegram, raw::RawSaveTelegram};
+use dump_dvb::schema;
+
 use async_trait::async_trait;
 use csv::WriterBuilder;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use std::env;
-use std::fs::{File, OpenOptions};
 use serde::Serialize;
-use dump_dvb::telegrams::{r09::R09SaveTelegram, raw::RawSaveTelegram};
-use dump_dvb::schema;
+use log::warn;
+
+use std::fs::{File, OpenOptions};
+use std::env;
 
 #[async_trait]
 pub trait Storage {
@@ -57,7 +60,7 @@ impl Storage for PostgresDB {
             .execute(&self.connection)
         {
             Err(e) => {
-                println!("Postgres Error {:?}", e);
+                warn!("Postgres Error {:?}", e);
             }
             _ => {}
         };
@@ -69,7 +72,7 @@ impl Storage for PostgresDB {
             .execute(&self.connection)
         {
             Err(e) => {
-                println!("Postgres Error {:?}", e);
+                warn!("Postgres Error {:?}", e);
             }
             _ => {}
         };
@@ -96,7 +99,12 @@ impl CSVFile {
             .from_writer(file);
 
         if create_headers {
-            wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY);
+            match wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY) {
+                Ok(_) => {}
+                Err(e) => {
+                    warn!("Unable to create headers {:?}", e);
+                }
+            }
         }
 
         wtr.serialize(telegram).expect("Cannot serialize data");

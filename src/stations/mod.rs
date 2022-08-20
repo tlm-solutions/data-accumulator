@@ -1,5 +1,7 @@
 use actix_diesel::Database;
 use diesel::pg::PgConnection;
+use log::info;
+
 use std::env;
 
 pub struct ClickyBuntyDatabase {
@@ -19,7 +21,7 @@ impl ClickyBuntyDatabase {
             env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
         );
 
-        println!("Connecting to postgres database {}", &postgres_host);
+        info!("Connecting to postgres database {}", &postgres_host);
         let db = Database::builder().open(postgres_host);
 
         ClickyBuntyDatabase { 

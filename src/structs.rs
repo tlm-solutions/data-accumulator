@@ -19,5 +19,8 @@ pub struct Args {
     pub grpc_host: String,
 
     #[clap(short, long, action)]
-    pub offline: bool
+    pub offline: bool,
+
+    #[clap(short, long, action)]
+    pub verbose: bool
 }

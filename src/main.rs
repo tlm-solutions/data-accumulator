@@ -19,16 +19,15 @@ pub use storage::{CSVFile, Empty, PostgresDB, Storage};
 use structs::Args;
 
 use actix_web::{web, App, HttpServer};
-use actix_web::{middleware::Logger};
 use clap::Parser;
 use tokio::runtime::Builder;
 use env_logger;
+use log::info;
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
-use std::sync::{Mutex, RwLock, Arc};
+use std::sync::{Mutex, RwLock};
 use std::thread;
-use std::any::Any;
 
 use dump_dvb::telegrams::{TelegramMetaInformation, r09::R09Telegram, raw::RawTelegram};
 
@@ -73,10 +72,12 @@ impl ApplicationState {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
-    std::env::set_var("RUST_LOG", "actix_web=trace");
+
+    let log_level = if args.verbose { "info" } else { "warning" };
+    std::env::set_var("RUST_LOG", format!("actix_web={}", log_level));
     env_logger::init();
 
-    println!("Starting Data Collection Server ... ");
+    info!("Starting Data Collection Server ... ");
     let host = args.host.as_str();
     let port = args.port;
 
@@ -117,17 +118,16 @@ async fn main() -> std::io::Result<()> {
         rt.block_on(processor_grpc.process_grpc());
     });
 
-    let app_state = web::Data::new(Arc::new(Mutex::new(ApplicationState::new(
+    let app_state = web::Data::new(RwLock::new(ApplicationState::new(
                     sender_r09_database, 
                     sender_raw_database, 
                     sender_grpc, 
                     args.offline
-    ))));
+    )));
 
-    println!("Listening on: {}:{}", host, port);
+    info!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
             .app_data(app_state.clone())
             .route("/telegram/r09", web::post().to(receiving_r09))
             .route("/telegram/raw", web::post().to(receiving_raw))

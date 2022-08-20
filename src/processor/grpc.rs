@@ -1,7 +1,11 @@
 use super::DataPipelineReceiverR09;
+
 use std::env;
+use log::info;
 
 use dump_dvb::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
+
+use log::warn;
 
 pub struct ProcessorGrpc {
     grpc_hosts: Vec<String>,
@@ -27,7 +31,7 @@ impl ProcessorGrpc {
     pub async fn process_grpc(&mut self) {
         loop {
             let (telegram, meta) = self.receiver_grpc.recv().unwrap();
-            println!(
+            info!(
                 "[ProcessorGrpc] post: queue size: {}",
                 self.receiver_grpc.try_iter().count()
             );
@@ -43,13 +47,13 @@ impl ProcessorGrpc {
                         ));
                         match client.receive_r09(request).await {
                             Err(e) => {
-                                println!("[ProcessorGrpc] Error while sending: {:?}", e);
+                                warn!("[ProcessorGrpc] Error while sending: {:?}", e);
                             }
                             _ => {}
                         }
                     }
                     Err(e) => {
-                        println!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", grpc_host_copy, &e);
+                        warn!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", grpc_host_copy, &e);
                     }
                 };
             }

@@ -1,6 +1,8 @@
 use super::{CSVFile, DataPipelineReceiverRaw, Empty, PostgresDB, Storage};
+use dump_dvb::telegrams::raw::RawSaveTelegram;
+
+use log::{info, warn};
 use std::env;
-use dump_dvb::telegrams::raw::{RawSaveTelegram, RawTelegram};
 
 pub struct ProcessorDatabaseRaw {
     backend: Box<dyn Storage>,
@@ -12,17 +14,19 @@ impl ProcessorDatabaseRaw {
         let backend = env::var("DATABASE_BACKEND").expect("You need to specify a DATABASE_BACKEND");
 
         if backend == "POSTGRES" {
+            info!("Using PostgresDB Backend for RawTelegram Database");
             ProcessorDatabaseRaw {
                 backend: Box::new(PostgresDB::new()),
                 receiver_raw: receiver_raw,
             }
         } else if backend == "CSVFILE" {
+            info!("Using CSVFILE Backend for RawTelegram Database");
             ProcessorDatabaseRaw {
                 backend: Box::new(CSVFile::new()),
                 receiver_raw: receiver_raw,
             }
         } else {
-            println!("[WARNING] NO Backend specified!");
+            warn!("[WARNING] NO Backend specified!");
 
             ProcessorDatabaseRaw {
                 backend: Box::new(Empty::new()),
@@ -34,7 +38,7 @@ impl ProcessorDatabaseRaw {
     pub async fn process_database(&mut self) {
         loop {
             let (telegram, meta) = self.receiver_raw.recv().unwrap();
-            println!(
+            info!(
                 "[ProcessorDatabase] post: queue size: {}",
                 self.receiver_raw.try_iter().count()
             );

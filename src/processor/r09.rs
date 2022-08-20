@@ -1,6 +1,8 @@
 use super::{CSVFile, DataPipelineReceiverR09, Empty, PostgresDB, Storage};
+use dump_dvb::telegrams::r09::R09SaveTelegram;
+
 use std::env;
-use dump_dvb::telegrams::r09::{R09SaveTelegram, R09Telegram};
+use log::{warn, info};
 
 pub struct ProcessorDatabaseR09 {
     backend: Box<dyn Storage>,
@@ -12,17 +14,19 @@ impl ProcessorDatabaseR09 {
         let backend = env::var("DATABASE_BACKEND").expect("You need to specify a DATABASE_BACKEND");
 
         if backend == "POSTGRES" {
+            info!("Using PostgresDB Backend for R09Telegram Database");
             ProcessorDatabaseR09 {
                 backend: Box::new(PostgresDB::new()),
                 receiver_r09: receiver_r09,
             }
         } else if backend == "CSVFILE" {
+            info!("Using CSVFILE Backend for R09Telegram Database");
             ProcessorDatabaseR09 {
                 backend: Box::new(CSVFile::new()),
                 receiver_r09: receiver_r09,
             }
         } else {
-            println!("[WARNING] NO Backend specified!");
+            warn!("[WARNING] NO Backend specified!");
 
             ProcessorDatabaseR09 {
                 backend: Box::new(Empty::new()),
@@ -34,7 +38,7 @@ impl ProcessorDatabaseR09 {
     pub async fn process_database(&mut self) {
         loop {
             let (telegram, meta) = self.receiver_r09.recv().unwrap();
-            println!(
+            info!(
                 "[ProcessorDatabase] post: queue size: {}",
                 self.receiver_r09.try_iter().count()
             );
