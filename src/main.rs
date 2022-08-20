@@ -92,7 +92,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::clone(&copy_able_sender))
             .app_data(web::Data::clone(&copy_able_database))
             .route("/telegram/r09", web::post().to(receiving_r09))
-            .route("/telegram/raw", web::post().to(receiving_raw))
+            //.route("/telegram/raw", web::post().to(receiving_raw))
         //.route("/telegram/raw", web::post().to(raw))
     })
     .bind((host, port))?
