@@ -1,5 +1,5 @@
 use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
-use super::DataPipelineSender;
+use super::{DataPipelineSender, ApplicationState};
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
@@ -39,9 +39,10 @@ pub struct Response {
 
 // /telegrams/r09/
 pub async fn receiving_r09(
-    filter: web::Data<Arc<RwLock<Filter>>>,
-    sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
-    database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
+    app_state: web::Data<Arc<ApplicationState>>,
+    //filter: web::Data<Arc<RwLock<Filter>>>,
+    //sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
+    //database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
@@ -50,7 +51,7 @@ pub async fn receiving_r09(
     let contained;
     // checks if the given telegram is already in the buffer
     {
-        let readable_filter = filter.read().unwrap();
+        let readable_filter = app_state.filter.lock().unwrap();
         contained = readable_filter.last_elements.contains(&telegram_hash);
     }
 
@@ -60,20 +61,20 @@ pub async fn receiving_r09(
     
     // updates the buffer adding the new telegram
     {
-        let mut writeable_filter = filter.write().unwrap();
+        let mut writeable_filter = app_state.filter.lock().unwrap();
         let index = writeable_filter.iterator;
         writeable_filter.last_elements[index] = telegram_hash;
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
     let meta: TelegramMetaInformation;
-    if database.lock().unwrap().db.is_none() {
+    if app_state.database.lock().unwrap().db.is_none() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -111,22 +112,20 @@ pub async fn receiving_r09(
         }
     }
 
-    match sender
-        .0
+    match app_state.grpc_sender
         .lock()
         .unwrap()
-        .try_send((Box::new((*telegram).data.clone()), meta.clone()))
+        .try_send(((*telegram).data.clone(), meta.clone()))
     {
         Err(err) => {
             println!("[main] Channel GRPC has problems! {:?}", err);
         }
         _ => {}
     }
-    match sender
-        .1
+    match app_state.database_sender
         .lock()
         .unwrap()
-        .try_send((Box::new((*telegram).data.clone()), meta))
+        .try_send(((*telegram).data.clone(), meta))
     {
         Err(err) => {
             println!("[main] Channel Database has problems! {:?}", err);
@@ -137,6 +136,7 @@ pub async fn receiving_r09(
     web::Json(Response { success: true })
 }
 
+/*
 pub async fn receiving_raw(
     filter: web::Data<Arc<RwLock<Filter>>>,
     sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
@@ -225,4 +225,4 @@ pub async fn receiving_raw(
 
     web::Json(Response { success: true })
 }
-
+*/

@@ -13,7 +13,7 @@ mod structs;
 
 use filter::Filter;
 use processor::{ProcessorDatabase, ProcessorGrpc};
-pub use routes::{receiving_r09, receiving_raw, Station};
+pub use routes::{receiving_r09, Station};
 use stations::ClickyBuntyDatabase;
 pub use storage::{CSVFile, Empty, PostgresDB, Storage};
 use structs::Args;
@@ -31,8 +31,37 @@ use std::any::Any;
 
 use dump_dvb::telegrams::{TelegramMetaInformation, r09::R09Telegram };
 
-pub type DataPipelineSender = SyncSender<(Box<dyn Any>, TelegramMetaInformation)>;
+//pub type DataPipelineSender = SyncSender<(Box<dyn Any>, TelegramMetaInformation)>;
+
+pub type DataPipelineSender = SyncSender<(R09Telegram, TelegramMetaInformation)>;
 pub type DataPipelineReceiver = Receiver<(R09Telegram, TelegramMetaInformation)>;
+
+pub struct ApplicationState {
+    database: Mutex<ClickyBuntyDatabase>,
+    database_sender: Mutex<DataPipelineSender>,
+    grpc_sender: Mutex<DataPipelineSender>,
+    filter: Mutex<Filter>
+}
+
+impl ApplicationState {
+    fn new(database_sender: DataPipelineSender, grpc_sender: DataPipelineSender, offline: bool) -> ApplicationState {
+
+        let database_struct;
+        if offline {
+            database_struct = ClickyBuntyDatabase::offline();
+        } else {
+            database_struct = ClickyBuntyDatabase::new();
+        };
+
+        ApplicationState {
+            database: Mutex::new(database_struct),
+            database_sender: Mutex::new(database_sender),
+            grpc_sender: Mutex::new(grpc_sender),
+            filter: Mutex::new(Filter::new())
+        }
+    }
+}
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -41,15 +70,6 @@ async fn main() -> std::io::Result<()> {
     println!("Starting Data Collection Server ... ");
     let host = args.host.as_str();
     let port = args.port;
-
-    let database_struct;
-    if args.offline {
-        database_struct = Arc::new(Mutex::new(ClickyBuntyDatabase::offline()));
-    } else {
-        database_struct = Arc::new(Mutex::new(ClickyBuntyDatabase::new()));
-    };
-
-    let filter = Arc::new(RwLock::new(Filter::new()));
 
     let (sender_database, receiver_database) =
         mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
@@ -76,21 +96,13 @@ async fn main() -> std::io::Result<()> {
         rt.block_on(processor_grpc.process_grpc());
     });
 
-    let web_database_sender = Mutex::new(sender_database);
-    let web_grpc_sender = Mutex::new(sender_grpc);
-    let sender = Arc::new((web_grpc_sender, web_database_sender));
-
-    let copy_able_filter = web::Data::new(Arc::clone(&filter));
-    let copy_able_sender = web::Data::new(Arc::clone(&sender));
-    let copy_able_database = web::Data::new(Arc::clone(&database_struct));
+    let app_state = web::Data::new(Arc::new(ApplicationState::new(sender_database, sender_grpc, args.offline)));
 
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
-            .app_data(web::Data::clone(&copy_able_filter))
-            .app_data(web::Data::clone(&copy_able_sender))
-            .app_data(web::Data::clone(&copy_able_database))
+            .app_data(app_state.clone())
             .route("/telegram/r09", web::post().to(receiving_r09))
             //.route("/telegram/raw", web::post().to(receiving_raw))
         //.route("/telegram/raw", web::post().to(raw))
