@@ -77,14 +77,18 @@ async fn main() -> std::io::Result<()> {
 
     let web_database_sender = Mutex::new(sender_database);
     let web_grpc_sender = Mutex::new(sender_grpc);
+    let sender = Arc::new((web_grpc_sender, web_database_sender));
 
-    let request_data = Arc::new((web_grpc_sender, web_database_sender));
+    let copy_able_filter = Arc::clone(&filter);
+    let copy_able_sender = Arc::clone(&sender);
+    let copy_able_database = Arc::clone(&database_struct);
+
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(filter.clone()))
-            .app_data(web::Data::new(request_data.clone()))
-            .app_data(web::Data::new(database_struct.clone()))
+            .app_data(copy_able_filter.clone())
+            .app_data(copy_able_sender.clone())
+            .app_data(copy_able_database.clone())
             .route("/telegram/r09", web::post().to(receiving_r09))
             .route("/telegram/raw", web::post().to(receiving_raw))
         //.route("/telegram/raw", web::post().to(raw))
