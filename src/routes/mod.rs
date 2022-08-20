@@ -72,7 +72,7 @@ pub async fn receiving_r09(
     }
 
     let meta: TelegramMetaInformation;
-    if app_state.lock().unwrap().database.lock().unwrap().db.is_none() {
+    if app_state.lock().unwrap().database.lock().unwrap().db.is_some() {
         let station;
         {
             // query database for this station
