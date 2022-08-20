@@ -39,8 +39,8 @@ pub struct Response {
 
 // /telegrams/r09/
 pub async fn receiving_r09(
-    filter: web::Data<RwLock<Filter>>,
-    sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
+    filter: web::Data<Arc<RwLock<Filter>>>,
+    sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
     database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
@@ -138,8 +138,8 @@ pub async fn receiving_r09(
 }
 
 pub async fn receiving_raw(
-    filter: web::Data<RwLock<Filter>>,
-    sender: web::Data<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>,
+    filter: web::Data<Arc<RwLock<Filter>>>,
+    sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
     database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,

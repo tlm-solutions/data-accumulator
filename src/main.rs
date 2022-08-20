@@ -48,7 +48,7 @@ async fn main() -> std::io::Result<()> {
         database_struct = Arc::new(Mutex::new(ClickyBuntyDatabase::new()));
     };
 
-    let filter = web::Data::new(RwLock::new(Filter::new()));
+    let filter = Arc::new(RwLock::new(Filter::new()));
 
     let (sender_database, receiver_database) =
         mpsc::sync_channel::<(R09Telegram, TelegramMetaInformation)>(200);
@@ -78,13 +78,13 @@ async fn main() -> std::io::Result<()> {
     let web_database_sender = Mutex::new(sender_database);
     let web_grpc_sender = Mutex::new(sender_grpc);
 
-    let request_data = web::Data::new((web_grpc_sender, web_database_sender));
+    let request_data = Arc::new((web_grpc_sender, web_database_sender));
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
-            .app_data(filter.clone())
-            .app_data(request_data.clone())
-            .app_data(database_struct.clone())
+            .app_data(web::Data::new(filter.clone()))
+            .app_data(web::Data::new(request_data.clone()))
+            .app_data(web::Data::new(database_struct.clone()))
             .route("/telegram/r09", web::post().to(receiving_r09))
             .route("/telegram/raw", web::post().to(receiving_raw))
         //.route("/telegram/raw", web::post().to(raw))
