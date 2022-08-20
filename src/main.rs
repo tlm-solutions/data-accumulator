@@ -22,6 +22,7 @@ use actix_web::{web, App, HttpServer};
 use actix_web::{middleware::Logger};
 use clap::Parser;
 use tokio::runtime::Builder;
+use env_logger;
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
@@ -66,6 +67,8 @@ impl ApplicationState {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
+    std::env::set_var("RUST_LOG", "actix_web=trace");
+    env_logger::init();
 
     println!("Starting Data Collection Server ... ");
     let host = args.host.as_str();
@@ -96,7 +99,7 @@ async fn main() -> std::io::Result<()> {
         rt.block_on(processor_grpc.process_grpc());
     });
 
-    let app_state = web::Data::new(Arc::new(ApplicationState::new(sender_database, sender_grpc, args.offline)));
+    let app_state = web::Data::new(Arc::new(Mutex::new(ApplicationState::new(sender_database, sender_grpc, args.offline))));
 
     println!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {

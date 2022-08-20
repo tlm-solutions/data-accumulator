@@ -39,7 +39,7 @@ pub struct Response {
 
 // /telegrams/r09/
 pub async fn receiving_r09(
-    app_state: web::Data<Arc<ApplicationState>>,
+    app_state: web::Data<Arc<Mutex<ApplicationState>>>,
     //filter: web::Data<Arc<RwLock<Filter>>>,
     //sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
     //database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
@@ -48,12 +48,15 @@ pub async fn receiving_r09(
 ) -> impl Responder {
     println!("[DEBUG] Received Telegram: {:?}", &telegram);
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
-    let contained;
     // checks if the given telegram is already in the buffer
-    {
-        let readable_filter = app_state.filter.lock().unwrap();
-        contained = readable_filter.last_elements.contains(&telegram_hash);
-    }
+    let contained = app_state
+        .lock()
+        .unwrap()
+        .filter
+        .lock()
+        .unwrap()
+        .last_elements
+        .contains(&telegram_hash);
 
     if contained {
         return web::Json(Response { success: false });
@@ -61,20 +64,21 @@ pub async fn receiving_r09(
     
     // updates the buffer adding the new telegram
     {
-        let mut writeable_filter = app_state.filter.lock().unwrap();
+        let mut writeable_app_state = app_state.lock().unwrap();
+        let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
         let index = writeable_filter.iterator;
         writeable_filter.last_elements[index] = telegram_hash;
         writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
     }
 
     let meta: TelegramMetaInformation;
-    if app_state.database.lock().unwrap().db.is_none() {
+    if app_state.lock().unwrap().database.lock().unwrap().db.is_none() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.lock().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -112,7 +116,7 @@ pub async fn receiving_r09(
         }
     }
 
-    match app_state.grpc_sender
+    match app_state.lock().unwrap().grpc_sender
         .lock()
         .unwrap()
         .try_send(((*telegram).data.clone(), meta.clone()))
@@ -122,7 +126,7 @@ pub async fn receiving_r09(
         }
         _ => {}
     }
-    match app_state.database_sender
+    match app_state.lock().unwrap().database_sender
         .lock()
         .unwrap()
         .try_send(((*telegram).data.clone(), meta))
