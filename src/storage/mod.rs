@@ -95,7 +95,7 @@ impl CSVFile {
             .unwrap();
 
         let mut wtr = WriterBuilder::new()
-            .has_headers(true);
+            .has_headers(true)
             .from_writer(file);
 
         wtr.serialize(telegram).expect("Cannot serialize data");
@@ -106,15 +106,10 @@ impl CSVFile {
         if !Path::new(file_path).exists() {
             match std::fs::File::create(file_path) {
                 Ok(file) => {
-                    let mut wtr = WriterBuilder::new()
+                    let _wtr = WriterBuilder::new()
+                        .has_headers(false)
                         .from_writer(file);
 
-                    match wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            warn!("Unable to create headers {:?}", e);
-                        }
-                    }
                     // TODO: this needs to be reworked when chown leaves unstable
                     let c_str = CString::new(file_path.as_str()).unwrap();
                     let c_path: *const c_char = c_str.as_ptr() as *const c_char;
