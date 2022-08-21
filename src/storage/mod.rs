@@ -6,10 +6,14 @@ use csv::WriterBuilder;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use serde::Serialize;
-use log::warn;
+use log::{warn, error};
+use libc::chown;
 
 use std::fs::{File, OpenOptions};
+use std::path::Path;
 use std::env;
+use std::ffi::CString;
+use libc::c_char;
 
 #[async_trait]
 pub trait Storage {
@@ -82,24 +86,46 @@ impl Storage for PostgresDB {
 impl CSVFile {
     fn write<T: Serialize>(file_path: &String, telegram: T) {
         let file: File;
-        let mut create_headers: bool = true;
-        if std::path::Path::new(file_path).exists() {
-            file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(file_path)
-                .unwrap();
+        file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .append(true)
+            .open(file_path)
+            .unwrap();
 
-            create_headers = false;
-        } else {
-            file = File::create(file_path).unwrap();
-        }
         let mut wtr = WriterBuilder::new()
-            .has_headers(create_headers)
             .from_writer(file);
 
         wtr.serialize(telegram).expect("Cannot serialize data");
         wtr.flush().expect("Cannot flush csv file");
+    }
+
+    fn create_file(file_path: &String) {
+        if !Path::new(file_path).exists() {
+            match std::fs::File::create(file_path) {
+                Ok(file) => {
+                    let mut wtr = WriterBuilder::new()
+                        .from_writer(file);
+
+                    match wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            warn!("Unable to create headers {:?}", e);
+                        }
+                    }
+                    // TODO: this needs to be reworked when chown leaves unstable
+                    let c_str = CString::new(file_path.as_str()).unwrap();
+                    let c_path: *const c_char = c_str.as_ptr() as *const c_char;
+                    unsafe {
+                        chown(c_path, 1501, 1501);
+                    }
+                }
+                Err(e) => {
+                    error!("cannot create file {} with error {:?}", file_path, e);
+                }
+            }
+        }
     }
 }
 
@@ -112,7 +138,16 @@ impl Storage for CSVFile {
         }
     }
 
-    async fn setup(&mut self) {}
+    async fn setup(&mut self) {
+        match &self.file_path_r09 {
+            Some(file_path) => { CSVFile::create_file(&file_path); }
+            None => {}
+        }
+        match &self.file_path_raw {
+            Some(file_path) => { CSVFile::create_file(&file_path); }
+            None => {}
+        }
+    }
 
 
     async fn write_r09(&mut self, data: R09SaveTelegram) {

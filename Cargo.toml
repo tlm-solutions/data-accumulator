@@ -33,6 +33,8 @@ futures = "0.1"
 tokio = "*"
 env_logger = "*"
 log = "*"
+nix = "*"
+libc = "*"
 
 [build-dependencies]
 tonic-build = "0.7"
