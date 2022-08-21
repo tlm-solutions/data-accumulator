@@ -73,7 +73,7 @@ impl ApplicationState {
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
-    let log_level = if args.verbose { "info" } else { "warning" };
+    let log_level = if args.verbose { "info" } else { "warn" };
     std::env::set_var("RUST_LOG", format!("actix_web={}", log_level));
     env_logger::init();
 

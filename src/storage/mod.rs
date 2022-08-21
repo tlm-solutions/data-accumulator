@@ -95,6 +95,7 @@ impl CSVFile {
             .unwrap();
 
         let mut wtr = WriterBuilder::new()
+            .has_headers(true);
             .from_writer(file);
 
         wtr.serialize(telegram).expect("Cannot serialize data");
