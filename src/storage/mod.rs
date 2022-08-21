@@ -98,15 +98,6 @@ impl CSVFile {
             .has_headers(create_headers)
             .from_writer(file);
 
-        if create_headers {
-            match wtr.write_record(R09SaveTelegram::FIELD_NAMES_AS_ARRAY) {
-                Ok(_) => {}
-                Err(e) => {
-                    warn!("Unable to create headers {:?}", e);
-                }
-            }
-        }
-
         wtr.serialize(telegram).expect("Cannot serialize data");
         wtr.flush().expect("Cannot flush csv file");
     }
