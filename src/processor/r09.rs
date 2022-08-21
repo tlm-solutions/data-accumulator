@@ -36,6 +36,7 @@ impl ProcessorDatabaseR09 {
     }
 
     pub async fn process_database(&mut self) {
+        self.backend.setup().await;
         loop {
             let (telegram, meta) = self.receiver_r09.recv().unwrap();
             info!(

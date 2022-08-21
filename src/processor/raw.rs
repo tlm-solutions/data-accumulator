@@ -36,6 +36,7 @@ impl ProcessorDatabaseRaw {
     }
 
     pub async fn process_database(&mut self) {
+        self.backend.setup().await;
         loop {
             let (telegram, meta) = self.receiver_raw.recv().unwrap();
             info!(

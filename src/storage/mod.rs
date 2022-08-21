@@ -87,7 +87,7 @@ impl CSVFile {
     fn write<T: Serialize>(file_path: &String, telegram: T) {
         let file: File;
         file = OpenOptions::new()
-            .create(true)
+            .create(false)
             .read(true)
             .write(true)
             .append(true)
@@ -114,6 +114,7 @@ impl CSVFile {
                     let c_str = CString::new(file_path.as_str()).unwrap();
                     let c_path: *const c_char = c_str.as_ptr() as *const c_char;
                     unsafe {
+                        // TODO: this is ugly
                         chown(c_path, 1501, 1501);
                     }
                 }
