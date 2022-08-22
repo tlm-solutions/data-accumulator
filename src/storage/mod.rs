@@ -10,6 +10,7 @@ use log::{warn, error};
 use libc::chown;
 
 use std::fs::{File, OpenOptions};
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::Path;
 use std::env;
 use std::ffi::CString;
@@ -104,7 +105,11 @@ impl CSVFile {
 
     fn create_file(file_path: &String) {
         if !Path::new(file_path).exists() {
-            match std::fs::File::create(file_path) {
+            match OpenOptions::new()
+                .create(true)
+                .write(true)
+                .mode(0o644)
+                .open(file_path) {
                 Ok(file) => {
                     let mut wtr = WriterBuilder::new()
                         .from_writer(file);
