@@ -9,8 +9,8 @@ of stations and forwards the data to other services over GRPC or writes it into 
 
 ## Building
 
-```
-    nix build
+```bash
+    $ nix build
 ```
 
 ## Conifguration
@@ -30,3 +30,26 @@ If you are using our flake I suggest taking a look at the options documentented 
         via grpc.
 
 
+### Commandline Arguments
+
+
+```bash
+dump-dvb telegram collection sink 0.3.0
+dump@dvb.solutions
+data collection server with authentication and statistics
+
+USAGE:
+    data-accumulator [OPTIONS]
+
+OPTIONS:
+    -h, --host <HOST>    [default: 127.0.0.1]
+        --help           Print help information
+    -o, --offline
+    -p, --port <PORT>    [default: 8080]
+    -v, --verbose
+    -V, --version        Print version information
+```
+
+The host and port option reference under which address the REST-Server should run which is exposed so client boxes 
+can talk with this piece of software. Secondly the option `--offline` deactivates all authentication and postgres needs 
+this option if primarly used by the `mobile-box`.
