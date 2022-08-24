@@ -8,5 +8,6 @@ table! {
         region -> Integer,
         owner -> Uuid,
         approved -> Bool,
+        deactivated -> Bool,
     }
 }

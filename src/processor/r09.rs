@@ -11,7 +11,7 @@ pub struct ProcessorDatabaseR09 {
 
 impl ProcessorDatabaseR09 {
     pub fn new(receiver_r09: DataPipelineReceiverR09)-> ProcessorDatabaseR09 {
-        let backend = env::var("DATABASE_BACKEND").expect("You need to specify a DATABASE_BACKEND");
+        let backend = env::var("DATABASE_BACKEND").unwrap_or("".to_string());
 
         if backend == "POSTGRES" {
             info!("Using PostgresDB Backend for R09Telegram Database");
