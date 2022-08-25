@@ -22,7 +22,7 @@ use actix_web::{web, App, HttpServer};
 use clap::Parser;
 use tokio::runtime::Builder;
 use env_logger;
-use log::info;
+use log::{info, debug};
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
@@ -125,13 +125,12 @@ async fn main() -> std::io::Result<()> {
                     args.offline
     )));
 
-    info!("Listening on: {}:{}", host, port);
+    debug!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
             .route("/telegram/r09", web::post().to(receiving_r09))
             .route("/telegram/raw", web::post().to(receiving_raw))
-        //.route("/telegram/raw", web::post().to(raw))
     })
     .bind((host, port))?
     .run()

@@ -42,13 +42,16 @@ pub struct Response {
 // /telegrams/r09/
 pub async fn receiving_r09(
     app_state: web::Data<RwLock<ApplicationState>>,
-    //filter: web::Data<Arc<RwLock<Filter>>>,
-    //sender: web::Data<Arc<(Mutex<DataPipelineSender>, Mutex<DataPipelineSender>)>>,
-    //database: web::Data<Arc<Mutex<ClickyBuntyDatabase>>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
     info!("[DEBUG] Station: {} Received Telegram: {:?}", &telegram.auth.station, &telegram.data);
+
+    if app_state.is_poisoned() {
+        warn!("cannot unwrap app state because the lock is poisenous");
+        return web::Json(Response { success: false });
+    }
+
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
     // checks if the given telegram is already in the buffer
     let contained = match (*app_state).read() {
@@ -80,11 +83,6 @@ pub async fn receiving_r09(
     }
 
     let meta: TelegramMetaInformation;
-
-    if app_state.is_poisoned() {
-        //app_state.clear_poison();
-    }
-
     if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
         let station;
         {
@@ -161,7 +159,14 @@ pub async fn receiving_raw(
     _req: HttpRequest,
 ) -> impl Responder {
     info!("[DEBUG] Station: {} Received Telegram: {:?}", &telegram.auth.station, &telegram.data);
+
+    if app_state.is_poisoned() {
+        warn!("cannot unwrap app state because the lock is poisenous");
+        return web::Json(Response { success: false });
+    }
+
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
+
     // checks if the given telegram is already in the buffer
     let contained = match (*app_state).read() {
         Ok(unlocked) => {
@@ -192,10 +197,6 @@ pub async fn receiving_raw(
     }
 
     let meta: TelegramMetaInformation;
-
-    if app_state.is_poisoned() {
-        //app_state.clear_poison();
-    }
 
     if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
         let station;

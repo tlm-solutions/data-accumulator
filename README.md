@@ -34,7 +34,7 @@ If you are using our flake I suggest taking a look at the options documentented 
 
 
 ```bash
-dump-dvb telegram collection sink 0.3.0
+data-accumulator 0.3.0
 dump@dvb.solutions
 data collection server with authentication and statistics
 

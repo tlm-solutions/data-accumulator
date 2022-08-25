@@ -4,7 +4,7 @@ extern crate derive_builder;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[clap(name = "dump-dvb telegram collection sink")]
+#[clap(name = "data-accumulator")]
 #[clap(author = "dump@dvb.solutions")]
 #[clap(version = "0.3.0")]
 #[clap(about = "data collection server with authentication and statistics", long_about = None)]
