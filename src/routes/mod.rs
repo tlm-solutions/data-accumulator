@@ -55,9 +55,8 @@ pub async fn receiving_r09(
         Ok(unlocked) => {
             unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
         }
-        Err(_) => {
-            // clear poisen and ignore telegram
-            //(***app_state).clear_poison();
+        Err(e) => {
+            warn!("cannot unwrap app state {:?}", e);
             true
         }
     };
@@ -74,8 +73,8 @@ pub async fn receiving_r09(
             writeable_filter.last_elements[index] = telegram_hash;
             writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
         }
-        Err(_) => {
-            //app_state.clear_poison();
+        Err(e) => {
+            warn!("cannot unwrap app state {:?}", e);
             return web::Json(Response { success: false });
         }
     }
@@ -168,9 +167,8 @@ pub async fn receiving_raw(
         Ok(unlocked) => {
             unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
         }
-        Err(_) => {
-            // clear poisen and ignore telegram
-            //(***app_state).clear_poison();
+        Err(e) => {
+            warn!("cannot unwrap app state {:?}", e);
             true
         }
     };
@@ -187,8 +185,8 @@ pub async fn receiving_raw(
             writeable_filter.last_elements[index] = telegram_hash;
             writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
         }
-        Err(_) => {
-            //app_state.clear_poison();
+        Err(e) => {
+            warn!("cannot unwrap app state {:?}", e);
             return web::Json(Response { success: false });
         }
     }

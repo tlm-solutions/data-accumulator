@@ -93,7 +93,7 @@ async fn main() -> std::io::Result<()> {
             .enable_io()
             .enable_time()
             .build()
-            .unwrap();
+            .expect("cannot spawn data processor r09");
         let mut processor_database_r09 = ProcessorDatabaseR09::new(receiver_r09_database);
         rt.block_on(processor_database_r09.process_database());
     });
@@ -103,7 +103,7 @@ async fn main() -> std::io::Result<()> {
             .enable_io()
             .enable_time()
             .build()
-            .unwrap();
+            .expect("cannot spawn processsor raw");
         let mut processor_database_raw = ProcessorDatabaseRaw::new(receiver_raw_database);
         rt.block_on(processor_database_raw.process_database());
     });
@@ -113,7 +113,7 @@ async fn main() -> std::io::Result<()> {
             .enable_io()
             .enable_time()
             .build()
-            .unwrap();
+            .expect("cannot spawn processor grpc");
         let mut processor_grpc = ProcessorGrpc::new(receiver_grpc);
         rt.block_on(processor_grpc.process_grpc());
     });
