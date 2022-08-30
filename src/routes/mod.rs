@@ -83,6 +83,7 @@ pub async fn receiving_r09(
     }
 
     let meta: TelegramMetaInformation;
+    let mut approved = false;
     if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
         let station;
         {
@@ -113,6 +114,8 @@ pub async fn receiving_r09(
             station: station.id,
             region: station.region,
         };
+        approved = station.approved;
+
         info!(
             "[main] Received Telegram! {} {:?}",
             &telegram.auth.station, &telegram
@@ -126,17 +129,19 @@ pub async fn receiving_r09(
             region: -1
         }
     }
-
-    match app_state.write().unwrap().grpc_sender
-        .lock()
-        .unwrap()
-        .try_send(((*telegram).data.clone(), meta.clone()))
-    {
-        Err(err) => {
-            warn!("[main] Channel GRPC has problems! {:?}", err);
+    if approved {
+        match app_state.write().unwrap().grpc_sender
+            .lock()
+            .unwrap()
+            .try_send(((*telegram).data.clone(), meta.clone()))
+        {
+            Err(err) => {
+                warn!("[main] Channel GRPC has problems! {:?}", err);
+            }
+            _ => {}
         }
-        _ => {}
     }
+
     match app_state.write().unwrap().database_r09_sender
         .lock()
         .unwrap()
@@ -227,6 +232,7 @@ pub async fn receiving_raw(
             station: station.id,
             region: station.region,
         };
+
         info!(
             "[main] Received Telegram! {} {:?}",
             &telegram.auth.station, &telegram
