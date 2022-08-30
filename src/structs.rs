@@ -17,7 +17,4 @@ pub struct Args {
 
     #[clap(short, long, action)]
     pub offline: bool,
-
-    #[clap(short, long, action)]
-    pub verbose: bool
 }

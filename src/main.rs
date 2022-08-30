@@ -73,9 +73,6 @@ impl ApplicationState {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
-
-    let log_level = if args.verbose { "info" } else { "warn" };
-    std::env::set_var("RUST_LOG", format!("data-accumulator={}", log_level));
     env_logger::init();
 
     info!("Starting Data Collection Server ... ");
