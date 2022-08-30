@@ -103,7 +103,6 @@ pub async fn receiving_r09(
         }
         if station.id != telegram.auth.station
             || station.token != Some(telegram.auth.token.clone())
-            || !station.approved
             || station.deactivated
         {
             // authentication for telegram failed !
@@ -218,7 +217,6 @@ pub async fn receiving_raw(
         }
         if station.id != telegram.auth.station
             || station.token != Some(telegram.auth.token.clone())
-            || !station.approved
             || station.deactivated
         {
             // authentication for telegram failed !
