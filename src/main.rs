@@ -26,7 +26,7 @@ use log::{info, debug};
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, SyncSender};
-use std::sync::{Mutex, RwLock};
+use std::sync::{Mutex, Arc};
 use std::thread;
 
 use dump_dvb::telegrams::{TelegramMetaInformation, r09::R09Telegram, raw::RawTelegram};
@@ -38,17 +38,18 @@ pub type DataPipelineReceiverRaw = Receiver<(RawTelegram, TelegramMetaInformatio
 pub type DataPipelineReceiverR09 = Receiver<(R09Telegram, TelegramMetaInformation)>;
 
 pub struct ApplicationState {
-    database: Mutex<ClickyBuntyDatabase>,
-    database_r09_sender: Mutex<DataPipelineSenderR09>,
-    database_raw_sender: Mutex<DataPipelineSenderRaw>,
-    grpc_sender: Mutex<DataPipelineSenderR09>,
-    filter: Mutex<Filter>
+    database: ClickyBuntyDatabase,
+    database_r09_sender: Arc<Mutex<DataPipelineSenderR09>>,
+    database_raw_sender: Arc<Mutex<DataPipelineSenderRaw>>,
+    grpc_sender: Arc<Mutex<DataPipelineSenderR09>>,
+    filter: Arc<Mutex<Filter>>
 }
 
 impl ApplicationState {
-    fn new(database_r09_sender: DataPipelineSenderR09,
-           database_raw_sender: DataPipelineSenderRaw,
-           grpc_sender: DataPipelineSenderR09, 
+    fn new(database_r09_sender: Arc<Mutex<DataPipelineSenderR09>>,
+           database_raw_sender: Arc<Mutex<DataPipelineSenderRaw>>,
+           grpc_sender: Arc<Mutex<DataPipelineSenderR09>>, 
+           filter: Arc<Mutex<Filter>>,
            offline: bool) -> ApplicationState {
 
         let database_struct;
@@ -59,11 +60,11 @@ impl ApplicationState {
         };
 
         ApplicationState {
-            database: Mutex::new(database_struct),
-            database_r09_sender: Mutex::new(database_r09_sender),
-            database_raw_sender: Mutex::new(database_raw_sender),
-            grpc_sender: Mutex::new(grpc_sender),
-            filter: Mutex::new(Filter::new())
+            database: database_struct,
+            database_r09_sender: database_r09_sender,
+            database_raw_sender: database_raw_sender,
+            grpc_sender: grpc_sender,
+            filter: filter
         }
     }
 }
@@ -117,18 +118,23 @@ async fn main() -> std::io::Result<()> {
         let mut processor_grpc = ProcessorGrpc::new(receiver_grpc);
         rt.block_on(processor_grpc.process_grpc());
     });
-
-    let app_state = web::Data::new(RwLock::new(ApplicationState::new(
-                    sender_r09_database, 
-                    sender_raw_database, 
-                    sender_grpc, 
-                    args.offline
-    )));
+    let arc_sender_r09_database = Arc::new(Mutex::new(sender_r09_database)); 
+    let arc_sender_raw_database = Arc::new(Mutex::new(sender_raw_database));
+    let arc_sender_grpc = Arc::new(Mutex::new(sender_grpc));
+    let arc_filter = Arc::new(Mutex::new(Filter::new()));
 
     debug!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
+        let app_state = web::Data::new(Mutex::new(ApplicationState::new(
+            arc_sender_r09_database.clone(),
+            arc_sender_raw_database.clone(),
+            arc_sender_grpc.clone(),
+            arc_filter.clone(),
+            args.offline.clone()
+        )));
+
         App::new()
-            .app_data(app_state.clone())
+            .app_data(app_state)
             .route("/telegram/r09", web::post().to(receiving_r09))
             .route("/telegram/raw", web::post().to(receiving_raw))
     })

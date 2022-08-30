@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use log::{info, warn, error};
 
-use std::sync::RwLock;
+use std::sync::Mutex;
 use chrono::Utc;
 
 #[derive(Queryable, Debug, Clone)]
@@ -41,7 +41,7 @@ pub struct Response {
 
 // /telegrams/r09/
 pub async fn receiving_r09(
-    app_state: web::Data<RwLock<ApplicationState>>,
+    app_state: web::Data<Mutex<ApplicationState>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
@@ -54,7 +54,7 @@ pub async fn receiving_r09(
 
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
     // checks if the given telegram is already in the buffer
-    let contained = match (*app_state).read() {
+    let contained = match (*app_state).lock() {
         Ok(unlocked) => {
             unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
         }
@@ -69,7 +69,7 @@ pub async fn receiving_r09(
     }
 
     // updates the buffer adding the new telegram
-    match app_state.write() {
+    match app_state.lock() {
         Ok(writeable_app_state) => {
             let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
             let index = writeable_filter.iterator;
@@ -84,13 +84,13 @@ pub async fn receiving_r09(
 
     let meta: TelegramMetaInformation;
     let mut approved = false;
-    if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
+    if app_state.lock().unwrap().database.db.is_some() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.write().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.lock().unwrap().database.db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -130,7 +130,7 @@ pub async fn receiving_r09(
         }
     }
     if approved {
-        match app_state.write().unwrap().grpc_sender
+        match app_state.lock().unwrap().grpc_sender
             .lock()
             .unwrap()
             .try_send(((*telegram).data.clone(), meta.clone()))
@@ -142,7 +142,7 @@ pub async fn receiving_r09(
         }
     }
 
-    match app_state.write().unwrap().database_r09_sender
+    match app_state.lock().unwrap().database_r09_sender
         .lock()
         .unwrap()
         .try_send((((*telegram).data.clone()), meta))
@@ -158,7 +158,7 @@ pub async fn receiving_r09(
 
 // /telegrams/raw/
 pub async fn receiving_raw(
-    app_state: web::Data<RwLock<ApplicationState>>,
+    app_state: web::Data<Mutex<ApplicationState>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
@@ -172,7 +172,7 @@ pub async fn receiving_raw(
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
 
     // checks if the given telegram is already in the buffer
-    let contained = match (*app_state).read() {
+    let contained = match (*app_state).lock() {
         Ok(unlocked) => {
             unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
         }
@@ -187,7 +187,7 @@ pub async fn receiving_raw(
     }
 
     // updates the buffer adding the new telegram
-    match app_state.write() {
+    match app_state.lock() {
         Ok(writeable_app_state) => {
             let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
             let index = writeable_filter.iterator;
@@ -202,13 +202,13 @@ pub async fn receiving_raw(
 
     let meta: TelegramMetaInformation;
 
-    if app_state.read().unwrap().database.lock().unwrap().db.is_some() {
+    if app_state.lock().unwrap().database.db.is_some() {
         let station;
         {
             // query database for this station
             match (stations::table
                 .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.write().unwrap().database.lock().unwrap().db.as_ref().unwrap()))
+                .get_result_async::<Station>(&app_state.lock().unwrap().database.db.as_ref().unwrap()))
             .await
             {
                 Ok(data) => {
@@ -247,7 +247,7 @@ pub async fn receiving_raw(
         }
     }
 
-    match app_state.write().unwrap().database_raw_sender
+    match app_state.lock().unwrap().database_raw_sender
         .lock()
         .unwrap()
         .try_send((((*telegram).data.clone()), meta))
