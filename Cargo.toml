@@ -35,6 +35,8 @@ env_logger = "*"
 log = "*"
 nix = "*"
 libc = "*"
+r2d2 = "*"
+r2d2-diesel = "*"
 
 [build-dependencies]
 tonic-build = "0.7"

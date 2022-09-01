@@ -1,17 +1,17 @@
 use super::filter::{Filter, DEPULICATION_BUFFER_SIZE};
-use super::ApplicationState;
+use super::{ApplicationState, DbPool};
 
 use crate::diesel::ExpressionMethods;
 use crate::diesel::QueryDsl;
-use crate::schema::stations;
 
 use dump_dvb::telegrams::{
     TelegramMetaInformation, 
+    AuthenticationMeta,
     r09::R09ReceiveTelegram,
     raw::RawReceiveTelegram
 };
 
-use actix_diesel::dsl::AsyncRunQueryDsl;
+use diesel::pg::PgConnection;
 use actix_web::Responder;
 use actix_web::{web, HttpRequest};
 use serde::{Deserialize, Serialize};
@@ -39,8 +39,75 @@ pub struct Response {
     success: bool,
 }
 
+fn authenticate(conn: &PgConnection, auth: &AuthenticationMeta, offline: bool) -> Option<(TelegramMetaInformation, bool)> {
+    if offline {
+        return Some(
+            (
+                TelegramMetaInformation {
+                    time: Utc::now().naive_utc(),
+                    station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+                    region: -1
+                },
+                true
+            )
+        );
+    }
+
+    let station;
+    {
+        use crate::schema::stations::id;
+        use crate::schema::stations::dsl::stations;
+        use crate::diesel::RunQueryDsl;
+
+        match stations 
+            .filter(id.eq(auth.station))
+            .first::<Station>(conn) {
+            Ok(data) => {
+                station = data;
+            }
+            Err(e) => {
+                error!("Err: {:?}", e);
+                return None;
+            }
+        };
+    }
+    if station.id != auth.station
+        || station.token != Some(auth.token.clone())
+        || station.deactivated
+    {
+        // authentication for telegram failed !
+        return None;
+    }
+
+
+    Some((TelegramMetaInformation {
+        time: Utc::now().naive_utc(),
+        station: station.id,
+        region: station.region,
+    }, station.approved))
+}
+
+// checks if the given telegram hash is contained in the filter class
+async fn deduplicate(_conn: &PgConnection, filter: &mut Filter, telegram_hash: u64) -> bool {
+    // checks if the given telegram is already in the buffer
+    let contained = filter.last_elements.contains(&telegram_hash);
+
+    if contained {
+        return true;
+    }
+
+    // updates the buffer adding the new telegram
+    let index = filter.iterator;
+    filter.last_elements[index] = telegram_hash;
+    filter.iterator = (filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
+
+    contained
+}
+
+
 // /telegrams/r09/
 pub async fn receiving_r09(
+    pool: web::Data<DbPool>,
     app_state: web::Data<Mutex<ApplicationState>>,
     telegram: web::Json<R09ReceiveTelegram>,
     _req: HttpRequest,
@@ -53,82 +120,31 @@ pub async fn receiving_r09(
     }
 
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
-    // checks if the given telegram is already in the buffer
-    let contained = match (*app_state).lock() {
-        Ok(unlocked) => {
-            unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
-        }
-        Err(e) => {
-            warn!("cannot unwrap app state {:?}", e);
-            true
-        }
-    };
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    let contained = deduplicate(&conn, &mut(app_state.lock().unwrap().filter.lock().unwrap()), telegram_hash).await;
 
     if contained {
         return web::Json(Response { success: false });
     }
 
-    // updates the buffer adding the new telegram
-    match app_state.lock() {
-        Ok(writeable_app_state) => {
-            let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
-            let index = writeable_filter.iterator;
-            writeable_filter.last_elements[index] = telegram_hash;
-            writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
-        }
-        Err(e) => {
-            warn!("cannot unwrap app state {:?}", e);
-            return web::Json(Response { success: false });
-        }
-    }
+    info!(
+        "[main] Received Telegram! {} {:?}",
+        &telegram.auth.station, &telegram
+    );
 
     let meta: TelegramMetaInformation;
-    let mut approved = false;
-    if app_state.lock().unwrap().database.db.is_some() {
-        let station;
-        {
-            // query database for this station
-            match (stations::table
-                .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.lock().unwrap().database.db.as_ref().unwrap()))
-            .await
-            {
-                Ok(data) => {
-                    station = data;
-                }
-                Err(e) => {
-                    error!("Err: {:?}", e);
-                    return web::Json(Response { success: false });
-                }
-            };
+    let approved;
+
+    match authenticate(&conn, &telegram.auth, app_state.lock().unwrap().offline) {
+        Some((received_meta, received_approved)) => {
+            meta = received_meta;
+            approved = received_approved;
         }
-        if station.id != telegram.auth.station
-            || station.token != Some(telegram.auth.token.clone())
-            || station.deactivated
-        {
-            // authentication for telegram failed !
+        None => {
             return web::Json(Response { success: false });
         }
-        meta = TelegramMetaInformation {
-            time: Utc::now().naive_utc(),
-            station: station.id,
-            region: station.region,
-        };
-        approved = station.approved;
+    } 
 
-        info!(
-            "[main] Received Telegram! {} {:?}",
-            &telegram.auth.station, &telegram
-        );
-
-    } else {
-        // offline flag is set throw data out unauthenticated
-        meta = TelegramMetaInformation {
-            time: Utc::now().naive_utc(),
-            station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            region: -1
-        }
-    }
     if approved {
         match app_state.lock().unwrap().grpc_sender
             .lock()
@@ -158,6 +174,7 @@ pub async fn receiving_r09(
 
 // /telegrams/raw/
 pub async fn receiving_raw(
+    pool: web::Data<DbPool>,
     app_state: web::Data<Mutex<ApplicationState>>,
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
@@ -170,82 +187,22 @@ pub async fn receiving_raw(
     }
 
     let telegram_hash = Filter::calculate_hash(&*telegram).await;
-
-    // checks if the given telegram is already in the buffer
-    let contained = match (*app_state).lock() {
-        Ok(unlocked) => {
-            unlocked.filter.lock().unwrap().last_elements.contains(&telegram_hash)
-        }
-        Err(e) => {
-            warn!("cannot unwrap app state {:?}", e);
-            true
-        }
-    };
+    let conn = pool.get().expect("couldn't get db connection from pool");
+    let contained = deduplicate(&conn, &mut(app_state.lock().unwrap().filter.lock().unwrap()), telegram_hash).await;
 
     if contained {
         return web::Json(Response { success: false });
     }
 
-    // updates the buffer adding the new telegram
-    match app_state.lock() {
-        Ok(writeable_app_state) => {
-            let mut writeable_filter  = writeable_app_state.filter.lock().unwrap();
-            let index = writeable_filter.iterator;
-            writeable_filter.last_elements[index] = telegram_hash;
-            writeable_filter.iterator = (writeable_filter.iterator + 1) % DEPULICATION_BUFFER_SIZE;
-        }
-        Err(e) => {
-            warn!("cannot unwrap app state {:?}", e);
-            return web::Json(Response { success: false });
-        }
-    }
-
     let meta: TelegramMetaInformation;
-
-    if app_state.lock().unwrap().database.db.is_some() {
-        let station;
-        {
-            // query database for this station
-            match (stations::table
-                .filter(stations::id.eq(telegram.auth.station))
-                .get_result_async::<Station>(&app_state.lock().unwrap().database.db.as_ref().unwrap()))
-            .await
-            {
-                Ok(data) => {
-                    station = data;
-                }
-                Err(e) => {
-                    error!("Err: {:?}", e);
-                    return web::Json(Response { success: false });
-                }
-            };
+    match authenticate(&conn, &telegram.auth, false) {
+        Some((received_meta, _)) => {
+            meta = received_meta;
         }
-        if station.id != telegram.auth.station
-            || station.token != Some(telegram.auth.token.clone())
-            || station.deactivated
-        {
-            // authentication for telegram failed !
+        None => {
             return web::Json(Response { success: false });
         }
-        meta = TelegramMetaInformation {
-            time: Utc::now().naive_utc(),
-            station: station.id,
-            region: station.region,
-        };
-
-        info!(
-            "[main] Received Telegram! {} {:?}",
-            &telegram.auth.station, &telegram
-        );
-
-    } else {
-        // offline flag is set throw data out unauthenticated
-        meta = TelegramMetaInformation {
-            time: Utc::now().naive_utc(),
-            station: Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-            region: -1
-        }
-    }
+    } 
 
     match app_state.lock().unwrap().database_raw_sender
         .lock()
