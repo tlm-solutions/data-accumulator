@@ -1,5 +1,4 @@
 extern crate clap;
-extern crate derive_builder;
 
 use clap::Parser;
 

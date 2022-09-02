@@ -21,10 +21,9 @@ If you are using our flake I suggest taking a look at the options documentented 
 
 **Database and Storage**
 
-- **DATABASE_BACKEND**: possible values **POSTGRES**, **CSVFILE**, **EMPTY** if unspecified **EMPTY** is used
-- **POSTGRES_HOST**: only necessary if **DATABASE_BACKEND** is **POSTGRES**
-- **POSTGRES_PORT**: only necessary if **DATABASE_BACKEND** is **POSTGRES**
-- **POSTGRES_TELEGRAMS_PASSWORD**: only necessary if **DATABASE_BACKEND** is **POSTGRES**
+- **POSTGRES_HOST**: default host "127.0.0.1"
+- **POSTGRES_PORT**: default port 8080
+- **POSTGRES_TELEGRAMS_PASSWORD**: default pw "default_pw"
 - **GRPC_HOST_X**: X can be an arbitrary value all environment variables which 
         fit this prefix will be interpreted as hosts where data should be send to 
         via grpc.

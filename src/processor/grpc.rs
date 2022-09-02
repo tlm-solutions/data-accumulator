@@ -1,4 +1,5 @@
 use super::DataPipelineReceiverR09;
+use crate::filter::Filter;
 
 use std::env;
 use log::info;
@@ -10,6 +11,7 @@ use log::warn;
 pub struct ProcessorGrpc {
     grpc_hosts: Vec<String>,
     receiver_grpc: DataPipelineReceiverR09,
+    filter: Filter,
 }
 
 impl ProcessorGrpc {
@@ -25,16 +27,23 @@ impl ProcessorGrpc {
         ProcessorGrpc {
             grpc_hosts: grpc_hosts,
             receiver_grpc: receiver_grpc,
+            filter: Filter::new(),
         }
     }
 
     pub async fn process_grpc(&mut self) {
         loop {
             let (telegram, meta) = self.receiver_grpc.recv().unwrap();
+            let contained = self.filter.deduplicate(&telegram);
             info!(
                 "[ProcessorGrpc] post: queue size: {}",
                 self.receiver_grpc.try_iter().count()
             );
+
+            // is filtered out because was already transmitted shortly before
+            if contained.await {
+                continue;
+            }
 
             //TODO: optimize
             for grpc_host in self.grpc_hosts.clone().into_iter() {
