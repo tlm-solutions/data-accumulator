@@ -1,4 +1,4 @@
-{ naersk, src, lib, pkg-config, cmake, protobuf, postgresql, stops, zlib }:
+{ naersk, src, lib, pkg-config, cmake, protobuf, postgresql, zlib }:
 
 naersk.buildPackage {
   pname = "data-accumulator";
@@ -7,10 +7,6 @@ naersk.buildPackage {
   src = ./.;
 
   cargoSha256 = lib.fakeSha256;
-
-  patchPhase = ''
-    cp ${stops}/stops.json ./stops.json
-  '';
 
   nativeBuildInputs = [ pkg-config cmake ];
   buildInputs = [ protobuf zlib postgresql ];
