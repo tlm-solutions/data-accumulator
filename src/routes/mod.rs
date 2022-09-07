@@ -1,8 +1,4 @@
 use super::{ApplicationState, DbPool};
-
-use crate::diesel::ExpressionMethods;
-use crate::diesel::QueryDsl;
-
 use dump_dvb::telegrams::{
     TelegramMetaInformation, 
     AuthenticationMeta,
@@ -12,6 +8,8 @@ use dump_dvb::telegrams::{
 use dump_dvb::management::Station;
 
 use diesel::RunQueryDsl;
+use diesel::ExpressionMethods;
+use diesel::QueryDsl;
 use diesel::pg::PgConnection;
 use actix_web::Responder;
 use actix_web::{web, HttpRequest};
@@ -30,8 +28,6 @@ struct QueryResponse {
     pub telegram_meta: TelegramMetaInformation,
     pub approved: bool
 }
-
-
 
 async fn authenticate(conn: &PgConnection, auth: &AuthenticationMeta) -> Option<QueryResponse> {
     let station;
@@ -64,7 +60,7 @@ async fn authenticate(conn: &PgConnection, auth: &AuthenticationMeta) -> Option<
             telegram_meta:  TelegramMetaInformation {
                 time: Utc::now().naive_utc(),
                 station: station.id,
-                region: station.region
+                region: station.region as i32
             },
             approved: station.approved
         }
