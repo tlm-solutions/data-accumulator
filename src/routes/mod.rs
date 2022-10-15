@@ -124,7 +124,7 @@ pub async fn receiving_r09(
         .execute(&mut database_connection)
     {
         Err(e) => {
-            warn!("Postgres Error {:?}", e);
+            warn!("Postgres Error {:?} with telegram: {:?}", e, save_telegram);
         }
         _ => {}
     }
