@@ -4,7 +4,7 @@ version = "0.4.0"
 edition = "2021"
 
 [dependencies]
-dump-dvb = { version = "0.4", git = "https://github.com/dump-dvb/dump-dvb.rs" }
+dump-dvb = { version = "0.5", git = "https://github.com/dump-dvb/dump-dvb.rs" }
 
 derive_builder = "*"
 clap = { version = "3.1.8", features = ["derive"] }
@@ -13,7 +13,6 @@ clap = { version = "3.1.8", features = ["derive"] }
 actix-rt = "2.7"
 actix = "0.13"
 actix-web = "4.0"
-actix-diesel = { git = "https://github.com/frol/actix-diesel", branch = "actix-0.13", features = ["actix-web"] }
 
 # serde serialization / deserialization
 serde_json = "1.0"
@@ -23,7 +22,7 @@ serde = { version = "1.0", features = ["derive"] }
 tonic = "0.7"
 
 # database 
-diesel = { version = "1.0", features = ["postgres", "r2d2", "uuid", "chrono"] }
+diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono"] }
 r2d2 = "*"
 
 # utils 

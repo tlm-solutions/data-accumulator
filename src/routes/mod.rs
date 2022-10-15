@@ -7,9 +7,7 @@ use dump_dvb::telegrams::{
 };
 use dump_dvb::management::Station;
 
-use diesel::RunQueryDsl;
-use diesel::ExpressionMethods;
-use diesel::QueryDsl;
+use diesel::{RunQueryDsl, ExpressionMethods, QueryDsl};
 use diesel::pg::PgConnection;
 use actix_web::Responder;
 use actix_web::{web, HttpRequest};
@@ -29,7 +27,7 @@ struct QueryResponse {
     pub approved: bool
 }
 
-async fn authenticate(conn: &PgConnection, auth: &AuthenticationMeta) -> Option<QueryResponse> {
+async fn authenticate(conn: &mut PgConnection, auth: &AuthenticationMeta) -> Option<QueryResponse> {
     let station;
     {
         use dump_dvb::schema::stations::id;
@@ -85,7 +83,7 @@ pub async fn receiving_r09(
     );
 
     // getting the connection from the postgres connection pool
-    let database_connection = match pool.get() {
+    let mut database_connection = match pool.get() {
         Ok(conn) => conn,
         Err(e) => {
             error!("cannot get connection from connection pool {:?}", e);
@@ -95,7 +93,7 @@ pub async fn receiving_r09(
 
     // getting all the meta information from the station and checking
     // if the station is properly authenticated
-    let query_response = match authenticate(&database_connection, &telegram.auth).await {
+    let query_response = match authenticate(&mut database_connection, &telegram.auth).await {
         Some(response) => {
             response
         }
@@ -123,7 +121,7 @@ pub async fn receiving_r09(
     let save_telegram = R09SaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
     match diesel::insert_into(dump_dvb::schema::r09_telegrams::table)
         .values(&save_telegram)
-        .execute(&database_connection)
+        .execute(&mut database_connection)
     {
         Err(e) => {
             warn!("Postgres Error {:?}", e);
@@ -147,7 +145,7 @@ pub async fn receiving_raw(
     );
 
     // getting the connection from the postgres connection pool
-    let database_connection = match pool.get() {
+    let mut database_connection = match pool.get() {
         Ok(conn) => conn,
         Err(e) => {
             error!("cannot get connection from connection pool {:?}", e);
@@ -157,7 +155,7 @@ pub async fn receiving_raw(
 
     // getting all the meta information from the station and checking
     // if the station is properly authenticated
-    let query_response = match authenticate(&database_connection, &telegram.auth).await {
+    let query_response = match authenticate(&mut database_connection, &telegram.auth).await {
         Some(response) => {
             response
         }
@@ -171,7 +169,7 @@ pub async fn receiving_raw(
     let save_telegram = RawSaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
     match diesel::insert_into(dump_dvb::schema::raw_telegrams::table)
         .values(&save_telegram)
-        .execute(&database_connection)
+        .execute(&mut database_connection)
     {
         Err(e) => {
             warn!("Postgres Error {:?}", e);
