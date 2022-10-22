@@ -1,21 +1,20 @@
 use super::{ApplicationState, DbPool};
-use dump_dvb::telegrams::{
-    TelegramMetaInformation, 
-    AuthenticationMeta,
-    r09::{R09ReceiveTelegram, R09SaveTelegram},
-    raw::{RawReceiveTelegram, RawSaveTelegram}
-};
 use dump_dvb::management::Station;
+use dump_dvb::telegrams::{
+    r09::{R09ReceiveTelegram, R09SaveTelegram},
+    raw::{RawReceiveTelegram, RawSaveTelegram},
+    AuthenticationMeta, TelegramMetaInformation,
+};
 
-use diesel::{RunQueryDsl, ExpressionMethods, QueryDsl};
-use diesel::pg::PgConnection;
 use actix_web::Responder;
 use actix_web::{web, HttpRequest};
+use diesel::pg::PgConnection;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
-use log::{info, warn, error, debug};
 
-use std::sync::Mutex;
 use chrono::Utc;
+use std::sync::Mutex;
 
 #[derive(Serialize, Deserialize)]
 pub struct Response {
@@ -24,18 +23,16 @@ pub struct Response {
 
 struct QueryResponse {
     pub telegram_meta: TelegramMetaInformation,
-    pub approved: bool
+    pub approved: bool,
 }
 
 async fn authenticate(conn: &mut PgConnection, auth: &AuthenticationMeta) -> Option<QueryResponse> {
     let station;
     {
-        use dump_dvb::schema::stations::id;
         use dump_dvb::schema::stations::dsl::stations;
+        use dump_dvb::schema::stations::id;
 
-        match stations 
-            .filter(id.eq(auth.station))
-            .first::<Station>(conn) {
+        match stations.filter(id.eq(auth.station)).first::<Station>(conn) {
             Ok(data) => {
                 station = data;
             }
@@ -53,16 +50,14 @@ async fn authenticate(conn: &mut PgConnection, auth: &AuthenticationMeta) -> Opt
         return None;
     }
 
-    Some(
-        QueryResponse {
-            telegram_meta:  TelegramMetaInformation {
-                time: Utc::now().naive_utc(),
-                station: station.id,
-                region: station.region as i32
-            },
-            approved: station.approved
-        }
-    )
+    Some(QueryResponse {
+        telegram_meta: TelegramMetaInformation {
+            time: Utc::now().naive_utc(),
+            station: station.id,
+            region: station.region as i32,
+        },
+        approved: station.approved,
+    })
 }
 
 // /telegrams/r09/
@@ -87,16 +82,14 @@ pub async fn receiving_r09(
         Ok(conn) => conn,
         Err(e) => {
             error!("cannot get connection from connection pool {:?}", e);
-            return web::Json(Response { success: false })
+            return web::Json(Response { success: false });
         }
     };
 
     // getting all the meta information from the station and checking
     // if the station is properly authenticated
     let query_response = match authenticate(&mut database_connection, &telegram.auth).await {
-        Some(response) => {
-            response
-        }
+        Some(response) => response,
         None => {
             debug!("authentication failed for user {:?}", telegram.auth.station);
             return web::Json(Response { success: false });
@@ -105,11 +98,16 @@ pub async fn receiving_r09(
 
     // sends data to the grpc sender
     if query_response.approved {
-        match app_state.lock().unwrap().grpc_sender
+        match app_state
             .lock()
             .unwrap()
-            .try_send(((*telegram).data.clone(), query_response.telegram_meta.clone()))
-        {
+            .grpc_sender
+            .lock()
+            .unwrap()
+            .try_send((
+                (*telegram).data.clone(),
+                query_response.telegram_meta.clone(),
+            )) {
             Err(err) => {
                 warn!("[main] Channel GRPC has problems! {:?}", err);
             }
@@ -149,16 +147,14 @@ pub async fn receiving_raw(
         Ok(conn) => conn,
         Err(e) => {
             error!("cannot get connection from connection pool {:?}", e);
-            return web::Json(Response { success: false })
+            return web::Json(Response { success: false });
         }
     };
 
     // getting all the meta information from the station and checking
     // if the station is properly authenticated
     let query_response = match authenticate(&mut database_connection, &telegram.auth).await {
-        Some(response) => {
-            response
-        }
+        Some(response) => response,
         None => {
             debug!("authentication failed for user {:?}", telegram.auth.station);
             return web::Json(Response { success: false });
@@ -176,7 +172,6 @@ pub async fn receiving_raw(
         }
         _ => {}
     }
-
 
     web::Json(Response { success: true })
 }

@@ -6,6 +6,9 @@ use dump_dvb::telegrams::r09::R09Telegram;
 
 pub const DEPULICATION_BUFFER_SIZE: usize = 30;
 
+// Saves the hashes of last n telegrams
+// if a new telegram is received we check if its contained
+// in this circular buffer.
 pub struct Filter {
     pub last_elements: [u64; DEPULICATION_BUFFER_SIZE], // vector of hashes for deduplication
     pub iterator: usize,                                // keeps track of the oldest element

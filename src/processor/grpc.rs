@@ -1,8 +1,8 @@
-use super::DataPipelineReceiverR09;
 use crate::filter::Filter;
+use crate::DataPipelineReceiverR09;
 
-use std::env;
 use log::info;
+use std::env;
 
 use dump_dvb::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
 
@@ -25,8 +25,8 @@ impl ProcessorGrpc {
         }
 
         ProcessorGrpc {
-            grpc_hosts: grpc_hosts,
-            receiver_grpc: receiver_grpc,
+            grpc_hosts,
+            receiver_grpc,
             filter: Filter::new(),
         }
     }
@@ -62,7 +62,10 @@ impl ProcessorGrpc {
                         }
                     }
                     Err(e) => {
-                        warn!("[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}", grpc_host_copy, &e);
+                        warn!(
+                            "[ProcessorGrpc] Cannot connect to GRPC Host: {} with error {:?}",
+                            grpc_host_copy, &e
+                        );
                     }
                 };
             }
