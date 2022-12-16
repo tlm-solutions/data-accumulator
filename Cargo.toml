@@ -4,7 +4,7 @@ version = "0.4.0"
 edition = "2021"
 
 [dependencies]
-dump-dvb = { version = "0.5", git = "https://github.com/dump-dvb/dump-dvb.rs" }
+dump-dvb = { version = "0.6", git = "https://github.com/dump-dvb/dump-dvb.rs", features = ["telegrams", "management"]}
 
 derive_builder = "*"
 clap = { version = "3.1.8", features = ["derive"] }
