@@ -6,16 +6,16 @@ edition = "2021"
 [dependencies]
 dump-dvb = { version = "0.6", git = "https://github.com/dump-dvb/dump-dvb.rs", features = ["telegrams", "management"]}
 
-derive_builder = "*"
+#derive_builder = "*"
 clap = { version = "3.1.8", features = ["derive"] }
 
 # webserver shit
-actix-rt = "2.7"
-actix = "0.13"
+#actix-rt = "2.7"
+#actix = "0.13"
 actix-web = "4.0"
 
 # serde serialization / deserialization
-serde_json = "1.0"
+# serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 
 # protobuf grpc 
@@ -27,7 +27,7 @@ r2d2 = "*"
 
 # utils 
 chrono = "0.4"
-uuid = { version = "=0.8.1", features = ["serde", "v4"] }
+# uuid = { version = "=0.8.1", features = ["serde", "v4"] }
 tokio = "*"
 env_logger = "*"
 log = "*"
