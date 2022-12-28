@@ -26,7 +26,7 @@ use std::sync::mpsc::{Receiver, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use dump_dvb::telegrams::{r09::R09Telegram, TelegramMetaInformation};
+use tlms::telegrams::{r09::R09Telegram, TelegramMetaInformation};
 
 pub type DataPipelineSenderR09 = SyncSender<(R09Telegram, TelegramMetaInformation)>;
 pub type DataPipelineReceiverR09 = Receiver<(R09Telegram, TelegramMetaInformation)>;

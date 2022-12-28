@@ -1,6 +1,6 @@
 use super::{ApplicationState, DbPool};
-use dump_dvb::management::Station;
-use dump_dvb::telegrams::{
+use tlms::management::Station;
+use tlms::telegrams::{
     r09::{R09ReceiveTelegram, R09SaveTelegram},
     raw::{RawReceiveTelegram, RawSaveTelegram},
     AuthenticationMeta, TelegramMetaInformation,
@@ -29,8 +29,8 @@ struct QueryResponse {
 async fn authenticate(conn: &mut PgConnection, auth: &AuthenticationMeta) -> Option<QueryResponse> {
     let station;
     {
-        use dump_dvb::schema::stations::dsl::stations;
-        use dump_dvb::schema::stations::id;
+        use tlms::schema::stations::dsl::stations;
+        use tlms::schema::stations::id;
 
         match stations.filter(id.eq(auth.station)).first::<Station>(conn) {
             Ok(data) => {
@@ -117,7 +117,7 @@ pub async fn receiving_r09(
 
     // writing telegram into database
     let save_telegram = R09SaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
-    match diesel::insert_into(dump_dvb::schema::r09_telegrams::table)
+    match diesel::insert_into(tlms::schema::r09_telegrams::table)
         .values(&save_telegram)
         .execute(&mut database_connection)
     {
@@ -163,7 +163,7 @@ pub async fn receiving_raw(
 
     // writing telegram into database
     let save_telegram = RawSaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
-    match diesel::insert_into(dump_dvb::schema::raw_telegrams::table)
+    match diesel::insert_into(tlms::schema::raw_telegrams::table)
         .values(&save_telegram)
         .execute(&mut database_connection)
     {

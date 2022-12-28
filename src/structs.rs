@@ -4,8 +4,8 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[clap(name = "data-accumulator")]
-#[clap(author = "dump@dvb.solutions")]
-#[clap(version = "0.3.0")]
+#[clap(author = "contact@tlm.solutions")]
+#[clap(version = "0.4.1")]
 #[clap(about = "data collection server with authentication and statistics", long_about = None)]
 pub struct Args {
     #[clap(short, long, default_value_t = String::from("127.0.0.1"))]

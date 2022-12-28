@@ -4,7 +4,7 @@ use crate::DataPipelineReceiverR09;
 use log::info;
 use std::env;
 
-use dump_dvb::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
+use tlms::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
 
 use log::warn;
 
