@@ -12,9 +12,9 @@ pub use routes::{receiving_r09, receiving_raw};
 use structs::Args;
 
 use actix_web::{web, App, HttpServer};
+use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use clap::Parser;
 use diesel::{r2d2::ConnectionManager, PgConnection};
-use env_logger;
 use log::{debug, info};
 use r2d2::Pool;
 use tokio::runtime::Builder;
@@ -72,6 +72,14 @@ pub fn create_db_pool() -> DbPool {
     Pool::new(manager).expect("Failed to create pool.")
 }
 
+pub fn get_prometheus() -> PrometheusMetrics {
+    PrometheusMetricsBuilder::new("api")
+        .endpoint("/metrics")
+        //.const_labels(None)
+        .build()
+        .unwrap()
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = Args::parse();
@@ -102,8 +110,10 @@ async fn main() -> std::io::Result<()> {
     debug!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         let app_state = web::Data::new(Mutex::new(ApplicationState::new(arc_sender_grpc.clone())));
+        let prometheus = get_prometheus();
 
         App::new()
+            .wrap(prometheus)
             .app_data(postgres_pool.clone())
             .app_data(app_state)
             .route("/telegram/r09", web::post().to(receiving_r09))
