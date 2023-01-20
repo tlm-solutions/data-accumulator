@@ -54,11 +54,8 @@ impl ProcessorGrpc {
                             telegram.clone(),
                             meta.clone(),
                         ));
-                        match client.receive_r09(request).await {
-                            Err(e) => {
-                                warn!("[ProcessorGrpc] Error while sending: {:?}", e);
-                            }
-                            _ => {}
+                        if let Err(e) = client.receive_r09(request).await {
+                            warn!("[ProcessorGrpc] Error while sending: {:?}", e);
                         }
                     }
                     Err(e) => {

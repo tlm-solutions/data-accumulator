@@ -98,33 +98,25 @@ pub async fn receiving_r09(
 
     // sends data to the grpc sender
     if query_response.approved {
-        match app_state
+        if let Err(err) = app_state
             .lock()
             .unwrap()
             .grpc_sender
             .lock()
             .unwrap()
-            .try_send((
-                (*telegram).data.clone(),
-                query_response.telegram_meta.clone(),
-            )) {
-            Err(err) => {
-                warn!("[main] Channel GRPC has problems! {:?}", err);
-            }
-            _ => {}
+            .try_send((telegram.data.clone(), query_response.telegram_meta.clone()))
+        {
+            warn!("[main] Channel GRPC has problems! {:?}", err);
         }
     }
 
     // writing telegram into database
     let save_telegram = R09SaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
-    match diesel::insert_into(tlms::schema::r09_telegrams::table)
+    if let Err(e) = diesel::insert_into(tlms::schema::r09_telegrams::table)
         .values(&save_telegram)
         .execute(&mut database_connection)
     {
-        Err(e) => {
-            warn!("Postgres Error {:?} with telegram: {:?}", e, save_telegram);
-        }
-        _ => {}
+        warn!("Postgres Error {:?} with telegram: {:?}", e, save_telegram);
     }
 
     web::Json(Response { success: true })
@@ -163,14 +155,12 @@ pub async fn receiving_raw(
 
     // writing telegram into database
     let save_telegram = RawSaveTelegram::from(telegram.data.clone(), query_response.telegram_meta);
-    match diesel::insert_into(tlms::schema::raw_telegrams::table)
+
+    if let Err(e) = diesel::insert_into(tlms::schema::raw_telegrams::table)
         .values(&save_telegram)
         .execute(&mut database_connection)
     {
-        Err(e) => {
-            warn!("Postgres Error {:?}", e);
-        }
-        _ => {}
+        warn!("Postgres Error {:?}", e);
     }
 
     web::Json(Response { success: true })

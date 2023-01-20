@@ -15,7 +15,6 @@ use actix_web::{web, App, HttpServer};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use clap::Parser;
 use diesel::{r2d2::ConnectionManager, PgConnection};
-use env_logger;
 use log::{debug, info};
 use r2d2::Pool;
 use tokio::runtime::Builder;
@@ -53,15 +52,14 @@ pub fn create_db_pool() -> DbPool {
     let default_postgres_port = String::from("5432");
     let default_postgres_pw_path = String::from("/run/secrets/postgres_password");
 
-    let password_path =
-        env::var("POSTGRES_PASSWORD_PATH").unwrap_or(default_postgres_pw_path.clone());
+    let password_path = env::var("POSTGRES_PASSWORD_PATH").unwrap_or(default_postgres_pw_path);
     let password = fs::read_to_string(password_path).expect("cannot read password file!");
 
     let database_url = format!(
         "postgres://dvbdump:{}@{}:{}/dvbdump",
         password,
-        env::var("POSTGRES_HOST").unwrap_or(default_postgres_host.clone()),
-        env::var("POSTGRES_PORT").unwrap_or(default_postgres_port.clone())
+        env::var("POSTGRES_HOST").unwrap_or(default_postgres_host),
+        env::var("POSTGRES_PORT").unwrap_or(default_postgres_port)
     );
 
     debug!("Connecting to postgres database {}", &database_url);
@@ -76,7 +74,6 @@ pub fn get_prometheus() -> PrometheusMetrics {
         //.const_labels(None)
         .build()
         .unwrap()
-
 }
 
 #[actix_web::main]
@@ -112,7 +109,7 @@ async fn main() -> std::io::Result<()> {
         let prometheus = get_prometheus();
 
         App::new()
-            .wrap(prometheus.clone())
+            .wrap(prometheus)
             .app_data(postgres_pool.clone())
             .app_data(app_state)
             .route("/telegram/r09", web::post().to(receiving_r09))
