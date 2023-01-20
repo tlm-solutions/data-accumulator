@@ -50,16 +50,20 @@ impl ApplicationState {
 pub fn create_db_pool() -> DbPool {
     let default_postgres_host = String::from("localhost");
     let default_postgres_port = String::from("5432");
+    let default_postgres_user = String::from("datacare");
+    let default_postgres_database = String::from("tlms");
     let default_postgres_pw_path = String::from("/run/secrets/postgres_password");
 
     let password_path = env::var("POSTGRES_PASSWORD_PATH").unwrap_or(default_postgres_pw_path);
     let password = fs::read_to_string(password_path).expect("cannot read password file!");
 
     let database_url = format!(
-        "postgres://dvbdump:{}@{}:{}/dvbdump",
+        "postgres://{}:{}@{}:{}/{}",
+        env::var("POSTGRES_USER").unwrap_or(default_postgres_user),
         password,
         env::var("POSTGRES_HOST").unwrap_or(default_postgres_host),
-        env::var("POSTGRES_PORT").unwrap_or(default_postgres_port)
+        env::var("POSTGRES_PORT").unwrap_or(default_postgres_port),
+        env::var("POSTGRES_DATABASE").unwrap_or(default_postgres_database)
     );
 
     debug!("Connecting to postgres database {}", &database_url);
