@@ -106,14 +106,14 @@ async fn main() -> std::io::Result<()> {
 
     let arc_sender_grpc = Arc::new(Mutex::new(sender_grpc));
     let postgres_pool = web::Data::new(create_db_pool());
+    let prometheus = get_prometheus();
 
     debug!("Listening on: {}:{}", host, port);
     HttpServer::new(move || {
         let app_state = web::Data::new(Mutex::new(ApplicationState::new(arc_sender_grpc.clone())));
-        let prometheus = get_prometheus();
 
         App::new()
-            .wrap(prometheus)
+            .wrap(prometheus.clone())
             .app_data(postgres_pool.clone())
             .app_data(app_state)
             .route("/telegram/r09", web::post().to(receiving_r09))
