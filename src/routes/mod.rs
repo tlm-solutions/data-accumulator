@@ -54,7 +54,7 @@ async fn authenticate(conn: &mut PgConnection, auth: &AuthenticationMeta) -> Opt
         telegram_meta: TelegramMetaInformation {
             time: Utc::now().naive_utc(),
             station: station.id,
-            region: station.region as i32,
+            region: station.region,
         },
         approved: station.approved,
     })
