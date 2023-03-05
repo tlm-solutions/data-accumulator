@@ -38,6 +38,12 @@
         inherit (self.packages.${prev.system})
           data-accumulator;
       };
+
+      nixosModules = rec {
+        default = data-accumulator;
+        data-accumulator = import ./nixos-module;
+      };
+
       hydraJobs =
         let
           hydraSystems = [
