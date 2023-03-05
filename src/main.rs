@@ -45,7 +45,7 @@ impl ApplicationState {
 }
 
 /// connects to postgres database
-/// default uri: postgres://dvbdump:{password}@localhost:5432/dvbdump
+/// default uri: postgres://tlms:{password}@localhost:5432/tlms
 /// where the password is read from /run/secrets/postgres_password
 pub fn create_db_pool() -> DbPool {
     let default_postgres_host = String::from("localhost");
