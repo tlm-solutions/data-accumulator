@@ -1,14 +1,14 @@
 {
   inputs = {
-    nixpkgs.url = github:NixOS/nixpkgs/nixos-unstable;
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.11";
 
     naersk = {
-      url = github:nix-community/naersk;
+      url = "github:nix-community/naersk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     utils = {
-      url = github:numtide/flake-utils;
+      url = "github:numtide/flake-utils";
     };
   };
 
@@ -29,12 +29,21 @@
             data-accumulator = package;
             default = package;
           };
+          devShells.default = pkgs.mkShell {
+            nativeBuildInputs = (with packages.data-accumulator; buildInputs ++ nativeBuildInputs);
+          };
         }
       ) // {
       overlays.default = final: prev: {
         inherit (self.packages.${prev.system})
           data-accumulator;
       };
+
+      nixosModules = rec {
+        default = data-accumulator;
+        data-accumulator = import ./nixos-module;
+      };
+
       hydraJobs =
         let
           hydraSystems = [
