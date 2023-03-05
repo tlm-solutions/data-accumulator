@@ -29,6 +29,9 @@
             data-accumulator = package;
             default = package;
           };
+          devShells.default = pkgs.mkShell {
+            nativeBuildInputs = (with packages.data-accumulator; buildInputs ++ nativeBuildInputs);
+          };
         }
       ) // {
       overlays.default = final: prev: {
