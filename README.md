@@ -1,6 +1,6 @@
 # Data Accumulator
 
-![](https://img.shields.io/endpoint?label=data-accumulator.x86_64-linux&logo=github&logoColor=red&url=https%3A%2F%2Fhydra.hq.c3d2.de%2Fjob%2Fdvb-dump%2Fdata-accumulator%2Fdata-accumulator.x86_64-linux%2Fshield)
+![](https://img.shields.io/endpoint?label=data-accumulator.x86_64-linux&logo=github&logoColor=red&url=https%3A%2F%2Fhydra.hq.c3d2.de%2Fjob%2Ftlm-solutions%2Fdata-accumulator%2Fdata-accumulator.x86_64-linux%2Fshield)
 [![built with nix](https://builtwithnix.org/badge.svg)](https://builtwithnix.org)
 
 
