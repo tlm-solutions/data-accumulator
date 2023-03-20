@@ -4,7 +4,8 @@ use crate::DataPipelineReceiverR09;
 use log::info;
 use std::env;
 
-use tlms::telegrams::r09::{R09GrpcTelegram, ReceivesTelegramsClient};
+//use tlms::telegrams::r09::ReceivesTelegramsClient;
+use tlms::grpc::{ R09GrpcTelegram, chemo_client::ChemoClient };
 
 use log::warn;
 
@@ -48,9 +49,9 @@ impl ProcessorGrpc {
             //TODO: optimize
             for grpc_host in self.grpc_hosts.clone().into_iter() {
                 let grpc_host_copy = grpc_host.clone();
-                match ReceivesTelegramsClient::connect(grpc_host).await {
+                match ChemoClient::connect(grpc_host).await {
                     Ok(mut client) => {
-                        let request = tonic::Request::new(R09GrpcTelegram::from(
+                        let request = tonic::Request::new(R09GrpcTelegram::create(
                             telegram.clone(),
                             meta.clone(),
                         ));
