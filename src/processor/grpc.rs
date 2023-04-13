@@ -51,10 +51,10 @@ impl ProcessorGrpc {
                 let grpc_host_copy = grpc_host.clone();
                 match ChemoClient::connect(grpc_host).await {
                     Ok(mut client) => {
-                        let request = tonic::Request::new(R09GrpcTelegram::create(
-                            telegram.clone(),
-                            meta.clone(),
-                        ));
+                        let grpc_telegram = R09GrpcTelegram::create(telegram.clone(), meta.clone());
+                        info!("[ProcessorGrpc] telegram: {:?}", &grpc_telegram);
+
+                        let request = tonic::Request::new(grpc_telegram);
                         if let Err(e) = client.receive_r09(request).await {
                             warn!("[ProcessorGrpc] Error while sending: {:?}", e);
                         }
