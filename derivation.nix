@@ -1,5 +1,4 @@
-{ naersk
-, src
+{ buildPackage
 , lib
 , pkg-config
 , cmake
@@ -9,7 +8,7 @@
 , openssl
 }:
 
-naersk.buildPackage {
+buildPackage {
   pname = "data-accumulator";
   version = "0.5.0";
 

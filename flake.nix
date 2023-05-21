@@ -7,19 +7,30 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    fenix = {
+      url = "github:nix-community/fenix";
+    };
+
     utils = {
       url = "github:numtide/flake-utils";
     };
   };
 
-  outputs = { self, nixpkgs, naersk, utils, ... }:
+  outputs = { self, nixpkgs, naersk, fenix, utils, ... }:
     utils.lib.eachDefaultSystem
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          toolchain = with fenix.packages.${system}; combine [
+            latest.cargo
+            latest.rustc
+          ];
 
           package = pkgs.callPackage ./derivation.nix {
-            naersk = naersk.lib.${system};
+            buildPackage = (naersk.lib.${system}.override {
+              cargo = toolchain;
+              rustc = toolchain;
+            }).buildPackage;
           };
 
         in
