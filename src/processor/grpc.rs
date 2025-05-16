@@ -1,7 +1,7 @@
 use crate::filter::Filter;
 use crate::DataPipelineReceiverR09;
 
-use log::info;
+use log::debug;
 use std::env;
 
 //use tlms::telegrams::r09::ReceivesTelegramsClient;
@@ -36,7 +36,7 @@ impl ProcessorGrpc {
         loop {
             let (telegram, meta) = self.receiver_grpc.recv().unwrap();
             let contained = self.filter.deduplicate(&telegram);
-            info!(
+            debug!(
                 "[ProcessorGrpc] post: queue size: {}",
                 self.receiver_grpc.try_iter().count()
             );
@@ -52,7 +52,7 @@ impl ProcessorGrpc {
                 match ChemoClient::connect(grpc_host).await {
                     Ok(mut client) => {
                         let grpc_telegram = R09GrpcTelegram::create(telegram.clone(), meta.clone());
-                        info!("[ProcessorGrpc] telegram: {:?}", &grpc_telegram);
+                        debug!("[ProcessorGrpc] telegram: {:?}", &grpc_telegram);
 
                         let request = tonic::Request::new(grpc_telegram);
                         if let Err(e) = client.receive_r09(request).await {

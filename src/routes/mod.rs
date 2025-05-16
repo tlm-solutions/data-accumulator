@@ -10,7 +10,7 @@ use actix_web::Responder;
 use actix_web::{web, HttpRequest};
 use diesel::pg::PgConnection;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
-use log::{debug, error, info, warn};
+use log::{debug, error, warn};
 use serde::{Deserialize, Serialize};
 
 use chrono::Utc;
@@ -72,7 +72,7 @@ pub async fn receiving_r09(
         return web::Json(Response { success: false });
     }
 
-    info!(
+    debug!(
         "Received Telegram! {} {:?}",
         &telegram.auth.station, &telegram
     );
@@ -129,7 +129,7 @@ pub async fn receiving_raw(
     telegram: web::Json<RawReceiveTelegram>,
     _req: HttpRequest,
 ) -> impl Responder {
-    info!(
+    debug!(
         "Received Telegram! {} {:?}",
         &telegram.auth.station, &telegram
     );
